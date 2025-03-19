@@ -1,0 +1,124 @@
+"use client"
+
+import { Card, CardContent } from "@/components/ui/card"
+import { Droplets, Coins, PieChart } from "lucide-react"
+import { Separator } from "@/components/ui/separator"
+
+interface PoolStatsProps {
+  exists: boolean
+  tokenA: string
+  tokenB: string
+  reservoirA: string
+  reservoirB: string
+  lpTokens: string
+}
+
+export function PoolStats({ exists, tokenA, tokenB, reservoirA, reservoirB, lpTokens }: PoolStatsProps) {
+  // فرمت کردن عدد با 6 رقم اعشار
+  const formatNumber = (num: string) => {
+    const value = Number.parseFloat(num)
+    return isNaN(value) ? "0" : value.toFixed(6)
+  }
+
+  // محاسبه درصد سهم کاربر از استخر
+  const calculateSharePercentage = () => {
+    const lpValue = Number.parseFloat(lpTokens)
+
+    // اگر کاربر توکن LP ندارد یا استخر وجود ندارد، سهم صفر است
+    if (!exists || isNaN(lpValue) || lpValue <= 0) {
+      return "0"
+    }
+
+    // فرض می‌کنیم که مجموع توکن‌های LP برابر با مجذور حاصل‌ضرب ذخایر است
+    // این یک تقریب ساده برای محاسبه سهم است
+    const reservoirAValue = Number.parseFloat(reservoirA)
+    const reservoirBValue = Number.parseFloat(reservoirB)
+
+    if (isNaN(reservoirAValue) || isNaN(reservoirBValue) || reservoirAValue <= 0 || reservoirBValue <= 0) {
+      return "0"
+    }
+
+    // محاسبه تقریبی سهم کاربر (درصد)
+    // در یک پیاده‌سازی واقعی، باید کل توکن‌های LP را از قرارداد دریافت کنیم
+    const totalLPEstimate = Math.sqrt(reservoirAValue * reservoirBValue)
+    const sharePercentage = (lpValue / totalLPEstimate) * 100
+
+    return sharePercentage.toFixed(2)
+  }
+
+  if (!exists) {
+    return (
+      <Card className="bg-secondary/50 border-dashed border-muted">
+        <CardContent className="p-6 text-center">
+          <div className="flex justify-center mb-4">
+            <Droplets className="h-12 w-12 text-muted-foreground opacity-50" />
+          </div>
+          <h3 className="text-lg font-medium mb-2">استخری وجود ندارد</h3>
+          <p className="text-sm text-muted-foreground">
+            برای این جفت توکن استخری وجود ندارد. با افزودن نقدینگی، استخر جدیدی ایجاد خواهید کرد.
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const sharePercentage = calculateSharePercentage()
+
+  return (
+    <Card className="border-primary/20">
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium">اطلاعات استخر</h3>
+          <div className="flex items-center gap-1 text-primary">
+            <Droplets className="h-5 w-5" />
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {/* موجودی استخر */}
+          <div className="bg-secondary/50 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Coins className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">موجودی استخر</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-background/50 rounded p-2">
+                <div className="text-xs text-muted-foreground mb-1">توکن {tokenA}</div>
+                <div className="font-medium">{formatNumber(reservoirA)}</div>
+              </div>
+              <div className="bg-background/50 rounded p-2">
+                <div className="text-xs text-muted-foreground mb-1">توکن {tokenB}</div>
+                <div className="font-medium">{formatNumber(reservoirB)}</div>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* توکن‌های LP کاربر */}
+          <div className="bg-secondary/50 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <PieChart className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">سهم شما از استخر</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-background/50 rounded p-2">
+                <div className="text-xs text-muted-foreground mb-1">توکن‌های LP</div>
+                <div className="font-medium">{formatNumber(lpTokens)}</div>
+              </div>
+              <div className="bg-background/50 rounded p-2">
+                <div className="text-xs text-muted-foreground mb-1">درصد سهم</div>
+                <div className="font-medium">{sharePercentage}%</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-xs text-muted-foreground text-center mt-2">
+            با افزودن یا برداشت نقدینگی، تعداد توکن‌های LP و سهم شما از استخر تغییر می‌کند.
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
