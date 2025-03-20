@@ -102,10 +102,10 @@ export function SwapInterface() {
       <Card className="border-2 border-primary/20">
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle className="text-xl">🥝 کیوی‌سواپ</CardTitle>
+            <CardTitle className="text-xl">کیوی‌سواپ</CardTitle>
             <ConnectWallet connected={connected} account={account} onConnect={connect} onDisconnect={disconnect} />
           </div>
-          <CardDescription>مبادله و تامین نقدینگی با امنیت بالا</CardDescription>
+          <CardDescription>مبادله بر بستر زنجیر</CardDescription>
           {connected && !isCorrectNetwork && <NetworkWarning onSwitchNetwork={switchNetwork} />}
         </CardHeader>
         <CardContent>

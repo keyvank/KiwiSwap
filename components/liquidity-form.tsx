@@ -83,7 +83,7 @@ export function LiquidityForm({
   }
 
   return (
-    <div className="relative">
+    <div className="relative" dir="rtl">
       <div
         className={cn(
           "grid transition-all duration-500 ease-in-out gap-6",
@@ -132,48 +132,32 @@ export function LiquidityForm({
             )}
           </Button>
 
-          {/* کارت پاداش‌ها - فقط در حالت موبایل یا وقتی گسترده نیست */}
-          <div className={cn("md:hidden", !isExpanded ? "block" : "hidden")}>
-            {poolExists && (
-              <RewardsCard
-                poolExists={poolExists}
-                pendingRewards={pendingRewards}
-                onClaimRewards={onClaimRewards}
-                disabled={disabled}
-              />
-            )}
-          </div>
+          {/* کارت پاداش‌ها - زیر دکمه افزودن نقدینگی */}
+          {poolExists && (
+            <RewardsCard
+              poolExists={poolExists}
+              pendingRewards={pendingRewards}
+              onClaimRewards={onClaimRewards}
+              disabled={disabled}
+            />
+          )}
         </div>
 
         {/* اطلاعات استخر و سهم کاربر - فقط در حالت گسترده */}
         <div
           className={cn(
-            "transition-opacity duration-300",
+            "transition-opacity duration-300 h-full",
             showPoolInfo && isExpanded ? "opacity-100" : "opacity-0 md:absolute md:pointer-events-none",
           )}
         >
-          <div className="space-y-6">
-            <PoolStats
-              exists={poolExists}
-              tokenA={tokenA}
-              tokenB={tokenB}
-              reservoirA={reservoirA}
-              reservoirB={reservoirB}
-              lpTokens={lpTokens}
-            />
-
-            {/* کارت پاداش‌ها - فقط در حالت دسکتاپ و گسترده */}
-            {poolExists && (
-              <div className="hidden md:block">
-                <RewardsCard
-                  poolExists={poolExists}
-                  pendingRewards={pendingRewards}
-                  onClaimRewards={onClaimRewards}
-                  disabled={disabled}
-                />
-              </div>
-            )}
-          </div>
+          <PoolStats
+            exists={poolExists}
+            tokenA={tokenA}
+            tokenB={tokenB}
+            reservoirA={reservoirA}
+            reservoirB={reservoirB}
+            lpTokens={lpTokens}
+          />
         </div>
       </div>
 

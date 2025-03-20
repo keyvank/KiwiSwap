@@ -128,7 +128,7 @@ export function SwapForm({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" dir="rtl">
       <TokenInput
         id="tokenA"
         label="از"

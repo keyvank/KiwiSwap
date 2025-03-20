@@ -439,7 +439,6 @@ export function calculateOutputAmount(amountIn: string, reservoirIn: string, res
 
     // فرمول CPMM: amountOut = (reservoirOut * amountIn) / (reservoirIn + amountIn)
     const amountOutNum = (reservoirOutNum * amountInNum) / (reservoirInNum + amountInNum)
-
     return amountOutNum.toString()
   } catch (error) {
     console.error("خطا در محاسبه مقدار خروجی:", error)
