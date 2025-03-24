@@ -12,7 +12,7 @@ const vazirmatn = Vazirmatn({
 export const metadata: Metadata = {
   title: "🥝 کیوی‌سواپ",
   description: "صرافی غیرمتمرکز مبتنی بر فرمول CPMM",
-    generator: 'v0.dev'
+  generator: "v0.dev",
 }
 
 export default function RootLayout({
@@ -30,6 +30,8 @@ export default function RootLayout({
     </html>
   )
 }
+
+import "./globals.css"
 
 
 

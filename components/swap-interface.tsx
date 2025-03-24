@@ -32,12 +32,14 @@ export function SwapInterface() {
     exchangeRate,
     balanceA,
     balanceB,
-    pendingRewards,
     lpTokens,
+    totalLpSupply,
     calculateOutput,
     swap,
     addLiquidity,
-    claimRewards,
+    removeLiquidity,
+    getRemoveLiquidityPreview,
+    estimateLPTokens,
   } = usePool({
     connected,
     account,
@@ -136,6 +138,7 @@ export function SwapInterface() {
                   onSwap={swap}
                   calculateOutput={calculateOutput}
                   disabled={!connected || !isCorrectNetwork}
+                  account={account}
                 />
               </TabsContent>
 
@@ -150,12 +153,14 @@ export function SwapInterface() {
                   poolExists={poolExists}
                   reservoirA={reservoirA}
                   reservoirB={reservoirB}
-                  pendingRewards={pendingRewards}
                   lpTokens={lpTokens}
+                  totalLpSupply={totalLpSupply}
                   onTokenASelect={handleTokenASelect}
                   onTokenBSelect={handleTokenBSelect}
                   onAddLiquidity={addLiquidity}
-                  onClaimRewards={claimRewards}
+                  onRemoveLiquidity={removeLiquidity}
+                  onGetRemovalPreview={getRemoveLiquidityPreview}
+                  estimateLPTokens={estimateLPTokens}
                   disabled={!connected || !isCorrectNetwork}
                   isExpanded={isExpanded}
                   showPoolInfo={showPoolInfo}

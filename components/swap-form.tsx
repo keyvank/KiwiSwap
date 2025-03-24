@@ -23,6 +23,7 @@ interface SwapFormProps {
     slippagePercentage: string,
   ) => { outputAmount: string; minAmountOut: string }
   disabled: boolean
+  account: string
 }
 
 export function SwapForm({
@@ -39,6 +40,7 @@ export function SwapForm({
   onSwap,
   calculateOutput,
   disabled,
+  account,
 }: SwapFormProps) {
   const [tokenAAmount, setTokenAAmount] = useState("")
   const [tokenBAmount, setTokenBAmount] = useState("")
@@ -175,15 +177,26 @@ export function SwapForm({
         }
       />
 
-      {!poolExists && (
-        <div className="p-3 bg-destructive/20 rounded-lg">
-          <div className="flex items-start gap-2 flex-row-reverse text-right">
+      {!account ? (
+        <div className="p-3 bg-destructive/20 rounded-lg" dir="rtl">
+          <div className="flex items-start gap-2">
             <Info className="h-4 w-4 mt-0.5 text-destructive" />
-            <div className="text-sm" dir="rtl">
-              <p>استخر برای این جفت توکن وجود ندارد. لطفا ابتدا نقدینگی اضافه کنید.</p>
+            <div className="text-sm">
+              <p>برای شروع مبادله کیف‌پول خود را متصل کنید.</p>
             </div>
           </div>
         </div>
+      ) : (
+        !poolExists && (
+          <div className="p-3 bg-destructive/20 rounded-lg">
+            <div className="flex items-start gap-2">
+              <Info className="h-4 w-4 mt-0.5 text-destructive" />
+              <div className="text-sm" dir="rtl">
+                <p>استخر برای این جفت توکن وجود ندارد. لطفا ابتدا نقدینگی اضافه کنید.</p>
+              </div>
+            </div>
+          </div>
+        )
       )}
 
       {poolExists &&

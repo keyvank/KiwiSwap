@@ -29,11 +29,22 @@ export function TokenInput({ id, label, value, token, balance, onChange, onToken
       <div className="flex justify-between">
         <Label htmlFor={id}>{label}</Label>
         <span className="text-xs text-muted-foreground">
-          موجودی: <span dir="ltr" className="font-mono">{formatNumber(balance)} {token}</span>
+          موجودی:{" "}
+          <span dir="ltr" className="font-mono">
+            {formatNumber(balance)} {token}
+          </span>
         </span>
       </div>
       <div className="flex space-x-2 space-x-reverse" dir="ltr">
-        <Input id={id} type="number" lang="en" placeholder="0.0" value={value} onChange={onChange} className="flex-1" />
+        <Input
+          id={id}
+          type="number"
+          lang="en"
+          placeholder="0.0"
+          value={value}
+          onChange={onChange}
+          className="flex-1 rounded-r-none border-r-0"
+        />
         <TokenSelector defaultToken={token} onSelect={onTokenSelect} />
       </div>
       {extraInfo}

@@ -1,6 +1,9 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+export const formatNumber = (num: string) => {
+  const value = Number.parseFloat(num)
+  return isNaN(value) ? "0" : value.toFixed(6)
 }
+
+export function cn(...inputs: (string | undefined | null)[]): string {
+  return inputs.filter(Boolean).join(" ")
+}
+

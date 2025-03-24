@@ -75,7 +75,7 @@ export function TokenSelector({ defaultToken = "ETH", onSelect }: TokenSelectorP
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger className="rounded-l-none" asChild>
         <Button variant="outline" className="min-w-24 flex items-center gap-2">
           <Image
             src={selectedTokenInfo.logo || "/placeholder.svg"}
@@ -88,7 +88,7 @@ export function TokenSelector({ defaultToken = "ETH", onSelect }: TokenSelectorP
           <ChevronDown className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent className="rounded-l-none" align="end">
         {tokens.map((token) => (
           <DropdownMenuItem
             key={token.symbol}

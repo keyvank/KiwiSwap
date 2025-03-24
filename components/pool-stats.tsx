@@ -11,38 +11,28 @@ interface PoolStatsProps {
   reservoirA: string
   reservoirB: string
   lpTokens: string
+  totalLpSupply: string
 }
 
-export function PoolStats({ exists, tokenA, tokenB, reservoirA, reservoirB, lpTokens }: PoolStatsProps) {
+export function PoolStats({ exists, tokenA, tokenB, reservoirA, reservoirB, lpTokens, totalLpSupply }: PoolStatsProps) {
   // فرمت کردن عدد با 6 رقم اعشار
   const formatNumber = (num: string) => {
     const value = Number.parseFloat(num)
     return isNaN(value) ? "0" : value.toFixed(6)
   }
 
-  // محاسبه درصد سهم کاربر از استخر
+  // محاسبه درصد سهم کاربر از استخر با استفاده از totalSupply واقعی
   const calculateSharePercentage = () => {
     const lpValue = Number.parseFloat(lpTokens)
+    const totalSupply = Number.parseFloat(totalLpSupply)
 
-    // اگر کاربر توکن LP ندارد یا استخر وجود ندارد، سهم صفر است
-    if (!exists || isNaN(lpValue) || lpValue <= 0) {
+    // اگر کاربر توکن LP ندارد یا استخر وجود ندارد یا کل توکن‌های LP صفر است، سهم صفر است
+    if (!exists || isNaN(lpValue) || lpValue <= 0 || isNaN(totalSupply) || totalSupply <= 0) {
       return "0"
     }
 
-    // فرض می‌کنیم که مجموع توکن‌های LP برابر با مجذور حاصل‌ضرب ذخایر است
-    // این یک تقریب ساده برای محاسبه سهم است
-    const reservoirAValue = Number.parseFloat(reservoirA)
-    const reservoirBValue = Number.parseFloat(reservoirB)
-
-    if (isNaN(reservoirAValue) || isNaN(reservoirBValue) || reservoirAValue <= 0 || reservoirBValue <= 0) {
-      return "0"
-    }
-
-    // محاسبه تقریبی سهم کاربر (درصد)
-    // در یک پیاده‌سازی واقعی، باید کل توکن‌های LP را از قرارداد دریافت کنیم
-    const totalLPEstimate = Math.sqrt(reservoirAValue * reservoirBValue)
-    const sharePercentage = (lpValue / totalLPEstimate) * 100
-
+    // محاسبه دقیق سهم کاربر با استفاده از کل توکن‌های LP
+    const sharePercentage = (lpValue / totalSupply) * 100
     return sharePercentage.toFixed(2)
   }
 
