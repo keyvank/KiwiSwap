@@ -57,7 +57,7 @@ export function PoolStats({ exists, tokenA, tokenB, reservoirA, reservoirB, lpTo
   return (
     <Card className="border-primary/20">
       <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between my-4">
           <h3 className="text-lg font-medium">اطلاعات استخر</h3>
           <div className="flex items-center gap-1 text-primary">
             <Droplets className="h-5 w-5" />
@@ -73,12 +73,12 @@ export function PoolStats({ exists, tokenA, tokenB, reservoirA, reservoirB, lpTo
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-background/50 rounded p-2">
-                <div className="text-xs text-muted-foreground mb-1">توکن {tokenA}</div>
-                <div className="font-medium">{formatNumber(reservoirA)}</div>
+                <div className="text-xs text-muted-foreground mb-1 text-center">توکن {tokenA}</div>
+                <div className="font-medium text-center">{formatNumber(reservoirA)}</div>
               </div>
               <div className="bg-background/50 rounded p-2">
-                <div className="text-xs text-muted-foreground mb-1">توکن {tokenB}</div>
-                <div className="font-medium">{formatNumber(reservoirB)}</div>
+                <div className="text-xs text-muted-foreground mb-1 text-center">توکن {tokenB}</div>
+                <div className="font-medium text-center">{formatNumber(reservoirB)}</div>
               </div>
             </div>
           </div>
@@ -93,12 +93,12 @@ export function PoolStats({ exists, tokenA, tokenB, reservoirA, reservoirB, lpTo
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-background/50 rounded p-2">
-                <div className="text-xs text-muted-foreground mb-1">توکن‌های LP</div>
-                <div className="font-medium">{formatNumber(lpTokens)}</div>
+                <div className="text-xs text-muted-foreground mb-1 text-center">توکن‌های LP</div>
+                <div className="font-medium text-center">{formatNumber(lpTokens)}</div>
               </div>
               <div className="bg-background/50 rounded p-2">
-                <div className="text-xs text-muted-foreground mb-1">درصد سهم</div>
-                <div className="font-medium">{sharePercentage}%</div>
+                <div className="text-xs text-muted-foreground mb-1 text-center">درصد سهم</div>
+                <div className="font-medium text-center">{sharePercentage}%</div>
               </div>
             </div>
           </div>

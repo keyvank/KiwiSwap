@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Loader2, Plus, Droplets, Coins, ArrowDown, ArrowDownRight, Info } from "lucide-react"
+import { Loader2, Plus, Droplets, Coins, ArrowDown, ArrowDownRight, Info, ArrowUp } from "lucide-react"
 import { TokenInput } from "@/components/token-input"
 import { PoolStats } from "@/components/pool-stats"
 import { cn } from "@/lib/utils"
@@ -181,12 +181,6 @@ export function LiquidityForm({
             onTokenSelect={onTokenASelect}
           />
 
-          <div className="flex justify-center">
-            <Button variant="outline" size="icon" className="rounded-full">
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-
           <TokenInput
             id="liquidityTokenB"
             label="توکن دوم"
@@ -231,7 +225,10 @@ export function LiquidityForm({
                 در حال افزودن نقدینگی...
               </>
             ) : (
-              "افزودن نقدینگی"
+              <>
+              <ArrowUp className="ml-2 h-4 w-4" />
+              افزودن نقدینگی
+              </>
             )}
           </Button>
 
