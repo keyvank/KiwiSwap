@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react"
 import { useToast } from "@/hooks/use-toast"
 import {
   checkPoolExists,
-  calculateOutputAmount,
   calculateMinimumOutputWithSlippage,
   addLiquidity,
   swapAForB,
@@ -17,6 +16,9 @@ import {
   getRemoveLiquidityPreview,
   removeLiquidity,
   estimateLPTokensToReceive,
+  getExactOutputAmount,
+  getSwapEvents,
+  getTokenSymbol,
 } from "@/lib/contract-utils"
 import { ethers } from "ethers"
 
@@ -25,6 +27,7 @@ interface UsePoolProps {
   account: string
   isCorrectNetwork: boolean
   tokenAAddress: string
+  tokenBAddress: string
   tokenBAddress: string
 }
 
@@ -97,6 +100,16 @@ const getPoolInfo = async (tokenAAddress: string, tokenBAddress: string) => {
       swapped: false,
     }
   }
+}
+
+// Function to format a number with a maximum of 6 decimal places
+const formatNumber = (number: ethers.BigNumber) => {
+  const formatted = ethers.utils.formatEther(number)
+  const parts = formatted.split(".")
+  if (parts.length > 1) {
+    return parts[0] + "." + parts[1].substring(0, 6)
+  }
+  return formatted
 }
 
 export function usePool({ connected, account, isCorrectNetwork, tokenAAddress, tokenBAddress }: UsePoolProps) {
@@ -221,23 +234,35 @@ export function usePool({ connected, account, isCorrectNetwork, tokenAAddress, t
 
   // محاسبه مقدار خروجی بر اساس مقدار ورودی
   const calculateOutput = useCallback(
-    (amountIn: string, isAToB: boolean, slippagePercentage: string) => {
+    async (amountIn: string, isAToB: boolean, slippagePercentage: string) => {
       if (!poolExists || !amountIn || Number.parseFloat(amountIn) <= 0) {
-        return { outputAmount: "0", minAmountOut: "0" }
+        return { outputAmount: "0", minAmountOut: "0", isLoading: false }
       }
 
-      let outputAmount
-      if (isAToB) {
-        outputAmount = calculateOutputAmount(amountIn, reservoirA, reservoirB)
-      } else {
-        outputAmount = calculateOutputAmount(amountIn, reservoirB, reservoirA)
+      try {
+        // Get the output token address
+        const outputTokenAddress = isAToB ? tokenBAddress : tokenAAddress
+
+        // Get the token decimals
+        // const decimals = await getTokenDecimals(outputTokenAddress)
+
+        // Get exact output from contract
+        const exactOutput = await getExactOutputAmount(tokenAAddress, tokenBAddress, amountIn, isAToB)
+
+        if (exactOutput !== null) {
+          // Calculate minimum amount with slippage while preserving decimals
+          const minAmountOut = calculateMinimumOutputWithSlippage(exactOutput, slippagePercentage)
+          return { outputAmount: exactOutput, minAmountOut, isLoading: false }
+        } else {
+          console.error("خطا در دریافت مقدار دقیق از قرارداد")
+          return { outputAmount: "0", minAmountOut: "0", isLoading: false }
+        }
+      } catch (error) {
+        console.error("خطا در محاسبه مقدار خروجی:", error)
+        return { outputAmount: "0", minAmountOut: "0", isLoading: false }
       }
-
-      const minAmountOut = calculateMinimumOutputWithSlippage(outputAmount, slippagePercentage)
-
-      return { outputAmount, minAmountOut }
     },
-    [poolExists, reservoirA, reservoirB],
+    [poolExists, tokenAAddress, tokenBAddress],
   )
 
   // تابع برای انجام مبادله
@@ -530,6 +555,75 @@ export function usePool({ connected, account, isCorrectNetwork, tokenAAddress, t
     refreshPool: fetchPoolAndBalances,
     getRemoveLiquidityPreview: fetchRemoveLiquidityPreview,
     estimateLPTokens,
+    getSwapEvents: async () => {
+      try {
+        if (!poolExists) return []
+
+        const { firstToken, secondToken, isOriginalOrder } = getSortedTokenAddresses()
+        const events = await getSwapEvents(firstToken, secondToken)
+
+        // Get token symbols
+        let symbolA, symbolB
+        try {
+          symbolA = await getTokenSymbol(tokenAAddress)
+          symbolB = await getTokenSymbol(tokenBAddress)
+        } catch (error) {
+          console.error("Error fetching token symbols:", error)
+          symbolA = tokenAAddress
+          symbolB = tokenBAddress
+        }
+
+        // Transform events into a more usable format
+        return events.map((event, index) => {
+          try {
+            // Use the isAToB field from the event to determine direction
+            // We need to account for whether tokens were swapped in sortTokenAddresses
+            const eventIsAToB = event.args?.isAToB !== undefined ? event.args.isAToB : true
+
+            // Adjust for token order - if tokens were swapped in sorting, we need to invert the direction
+            const effectiveIsAToB = isOriginalOrder ? eventIsAToB : !eventIsAToB
+
+            // Now determine which token is input and which is output
+            const tokenIn = effectiveIsAToB ? symbolA : symbolB
+            const tokenOut = effectiveIsAToB ? symbolB : symbolA
+
+            return {
+              id: `${event.blockNumber || 0}-${index}`,
+              user: event.args?.user || "",
+              amountIn: event.args?.amountIn
+                ? typeof ethers.utils !== "undefined"
+                  ? ethers.utils.formatEther(event.args.amountIn)
+                  : ethers.formatEther(event.args.amountIn)
+                : "0",
+              amountOut: event.args?.amountOut
+                ? typeof ethers.utils !== "undefined"
+                  ? ethers.utils.formatEther(event.args.amountOut)
+                  : ethers.formatEther(event.args.amountOut)
+                : "0",
+              timestamp: event.blockTimestamp || Math.floor(Date.now() / 1000),
+              tokenIn: tokenIn,
+              tokenOut: tokenOut,
+              txHash: event.transactionHash || "",
+            }
+          } catch (error) {
+            console.error("Error formatting event:", error)
+            return {
+              id: `error-${index}`,
+              user: "Unknown",
+              amountIn: "0",
+              amountOut: "0",
+              timestamp: Math.floor(Date.now() / 1000),
+              tokenIn: symbolA || tokenAAddress,
+              tokenOut: symbolB || tokenBAddress,
+              txHash: "", // Add empty transaction hash for error cases
+            }
+          }
+        })
+      } catch (error) {
+        console.error("Error getting swap events:", error)
+        return []
+      }
+    },
   }
 }
 

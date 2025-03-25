@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Loader2, Plus, Droplets, Coins, ArrowDown, ArrowDownRight, Info, ArrowUp } from "lucide-react"
+import { Loader2, Droplets, Coins, ArrowDown, ArrowDownRight, Info } from "lucide-react"
 import { TokenInput } from "@/components/token-input"
 import { PoolStats } from "@/components/pool-stats"
 import { cn } from "@/lib/utils"
@@ -64,13 +64,68 @@ export function LiquidityForm({
   const [isLoadingPreview, setIsLoadingPreview] = useState(false)
   const [estimatedLPTokens, setEstimatedLPTokens] = useState("0")
   const [isEstimatingLP, setIsEstimatingLP] = useState(false)
+  // Add state to track which token was last edited
+  const [lastEditedField, setLastEditedField] = useState<"A" | "B" | null>(null)
+
+  // Calculate the optimal amount for the second token based on pool ratio
+  const calculateOptimalAmount = (amount: string, isTokenA: boolean) => {
+    if (
+      !poolExists ||
+      !amount ||
+      Number.parseFloat(amount) <= 0 ||
+      !reservoirA ||
+      !reservoirB ||
+      Number.parseFloat(reservoirA) <= 0 ||
+      Number.parseFloat(reservoirB) <= 0
+    ) {
+      return "0"
+    }
+
+    try {
+      const inputAmount = Number.parseFloat(amount)
+      const reserveA = Number.parseFloat(reservoirA)
+      const reserveB = Number.parseFloat(reservoirB)
+
+      // Calculate based on which token was edited
+      if (isTokenA) {
+        // Calculate optimal amount for token B
+        return ((inputAmount * reserveB) / reserveA).toString()
+      } else {
+        // Calculate optimal amount for token A
+        return ((inputAmount * reserveA) / reserveB).toString()
+      }
+    } catch (error) {
+      console.error("Error calculating optimal amount:", error)
+      return "0"
+    }
+  }
 
   const handleLiquidityTokenAChange = (e) => {
-    setTokenAAmount(e.target.value)
+    const newAmount = e.target.value
+    setTokenAAmount(newAmount)
+    setLastEditedField("A")
+
+    // If pool exists, calculate optimal amount for token B
+    if (poolExists && newAmount && Number.parseFloat(newAmount) > 0) {
+      const optimalBAmount = calculateOptimalAmount(newAmount, true)
+      setTokenBAmount(optimalBAmount)
+    } else if (!newAmount || Number.parseFloat(newAmount) <= 0) {
+      setTokenBAmount("")
+    }
   }
 
   const handleLiquidityTokenBChange = (e) => {
-    setTokenBAmount(e.target.value)
+    const newAmount = e.target.value
+    setTokenBAmount(newAmount)
+    setLastEditedField("B")
+
+    // If pool exists, calculate optimal amount for token A
+    if (poolExists && newAmount && Number.parseFloat(newAmount) > 0) {
+      const optimalAAmount = calculateOptimalAmount(newAmount, false)
+      setTokenAAmount(optimalAAmount)
+    } else if (!newAmount || Number.parseFloat(newAmount) <= 0) {
+      setTokenAAmount("")
+    }
   }
 
   const handleAddLiquidity = async () => {
@@ -191,6 +246,25 @@ export function LiquidityForm({
             onTokenSelect={onTokenBSelect}
           />
 
+          {poolExists && (
+            <div className="p-3 bg-secondary/50 rounded-lg border border-primary/10">
+              <div className="flex items-center gap-2 mb-1">
+                <Info className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">نسبت استخر</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">نسبت فعلی:</span>
+                <span dir="ltr" className="text-sm font-medium font-mono">
+                  1 {tokenA} ={" "}
+                  {Number.parseFloat(reservoirA) > 0
+                    ? (Number.parseFloat(reservoirB) / Number.parseFloat(reservoirA)).toFixed(6)
+                    : "0"}{" "}
+                  {tokenB}
+                </span>
+              </div>
+            </div>
+          )}
+
           {tokenAAmount &&
             tokenBAmount &&
             Number.parseFloat(tokenAAmount) > 0 &&
@@ -208,7 +282,9 @@ export function LiquidityForm({
                       <span className="text-sm">در حال محاسبه...</span>
                     </div>
                   ) : (
-                    <span className="text-sm font-medium">{formatNumber(estimatedLPTokens)}</span>
+                    <span dir="ltr" className="text-sm font-medium font-mono">
+                      {formatNumber(estimatedLPTokens)}
+                    </span>
                   )}
                 </div>
               </div>
@@ -225,10 +301,7 @@ export function LiquidityForm({
                 در حال افزودن نقدینگی...
               </>
             ) : (
-              <>
-              <ArrowUp className="ml-2 h-4 w-4" />
-              افزودن نقدینگی
-              </>
+              "افزودن نقدینگی"
             )}
           </Button>
 
@@ -245,7 +318,8 @@ export function LiquidityForm({
                     placeholder="مقدار توکن LP"
                     value={previewLiquidity}
                     onChange={(e) => setPreviewLiquidity(e.target.value)}
-                    className="flex-1 px-3 py-2 bg-background rounded-lg text-sm"
+                    className="flex-1 px-3 py-2 bg-background rounded-lg text-sm font-mono"
+                    dir="rtl"
                   />
                   <span className="mr-2 text-sm flex items-center">
                     <Coins className="h-4 w-4 ml-1" />
@@ -264,7 +338,9 @@ export function LiquidityForm({
                         <Loader2 className="h-4 w-4 animate-spin text-primary" />
                       </div>
                     ) : (
-                      <div className="font-medium">{formatNumber(removalPreview.amountA)}</div>
+                      <div dir="ltr" className="font-medium font-mono">
+                        {formatNumber(removalPreview.amountA)}
+                      </div>
                     )}
                   </div>
                   <div className="bg-background/50 rounded p-2 border border-primary/5">
@@ -277,7 +353,9 @@ export function LiquidityForm({
                         <Loader2 className="h-4 w-4 animate-spin text-primary" />
                       </div>
                     ) : (
-                      <div className="font-medium">{formatNumber(removalPreview.amountB)}</div>
+                      <div dir="ltr" className="font-medium font-mono">
+                        {formatNumber(removalPreview.amountB)}
+                      </div>
                     )}
                   </div>
                 </div>

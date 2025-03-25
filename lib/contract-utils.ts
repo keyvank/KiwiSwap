@@ -26,6 +26,10 @@ export const BASIC_POOL_ABI = [
   "function removeLiquidity(uint256 liquidity) external returns (uint256 amountA, uint256 amountB)",
   "function swapAForB(uint256 amountAIn, uint256 minAmountBOut) external returns (uint256)",
   "function swapBForA(uint256 amountBIn, uint256 minAmountAOut) external returns (uint256)",
+  "function calculateSwapAForB(uint256 amountAIn) public view returns (uint256)",
+  "function calculateSwapBForA(uint256 amountBIn) public view returns (uint256)",
+  "function approxAForB(uint256 amountIn) public view returns (uint256 amountOut)",
+  "function approxBForA(uint256 amountIn) public view returns (uint256 amountOut)",
   "function getExchangeRate() external view returns (uint256, uint256)",
   "function reserveA() view returns (uint256)",
   "function reserveB() view returns (uint256)",
@@ -33,6 +37,7 @@ export const BASIC_POOL_ABI = [
   "function tokenB() view returns (address)",
   "function balanceOf(address account) view returns (uint256)",
   "function totalSupply() view returns (uint256)",
+  "event Swap(address indexed user, bool isAToB, uint256 amountIn, uint256 amountOut)",
 ]
 
 // ABI برای توکن‌های ERC20
@@ -44,10 +49,11 @@ export const ERC20_ABI = [
   "function transfer(address to, uint amount) returns (bool)",
   "function approve(address spender, uint256 amount) returns (bool)",
   "function allowance(address owner, address spender) view returns (uint256)",
+  "function totalSupply() view returns (uint256)",
 ]
 
 // آدرس قرارداد مدیریت استخر
-export const POOL_MANAGER_ADDRESS = "0x6f84742680311CEF5ba42bc10A71a4708b4561d1"
+export const POOL_MANAGER_ADDRESS = "0x42D4BA5e542d9FeD87EA657f0295F1968A61c00A"
 
 // آدرس‌های توکن‌های مشخص شده
 export const TOKEN_ADDRESSES = {
@@ -57,6 +63,34 @@ export const TOKEN_ADDRESSES = {
   IRT: "0x09E5DCF3872DD653c4CCA5378AbA77088457A8a9",
   DOGE: "0xC7d2B19934594c43b6ec678507Df24D49e7e2F69",
   BTC: "0x3B05FB2fA2AE1447f61A0456f102350626A69f0b",
+}
+
+// Add a cache for token symbols to avoid repeated calls to the contract
+const tokenSymbolCache: Record<string, string> = {}
+
+// Add a function to get token symbol from contract address
+export async function getTokenSymbol(tokenAddress: string): Promise<string> {
+  // Check if symbol is already in cache
+  if (tokenSymbolCache[tokenAddress.toLowerCase()]) {
+    return tokenSymbolCache[tokenAddress.toLowerCase()]
+  }
+
+  try {
+    // Connect to token contract
+    const tokenContract = await connectToToken(tokenAddress)
+
+    // Get symbol from contract
+    const symbol = await tokenContract.symbol()
+
+    // Cache the result
+    tokenSymbolCache[tokenAddress.toLowerCase()] = symbol
+
+    return symbol
+  } catch (error) {
+    console.error("Error fetching token symbol:", error)
+    // Return address as fallback
+    return tokenAddress.substring(0, 6) + "..." + tokenAddress.substring(tokenAddress.length - 4)
+  }
 }
 
 // بررسی اتصال به شبکه Zanjir
@@ -424,33 +458,8 @@ export async function getPoolInfo(tokenAAddress: string, tokenBAddress: string) 
   }
 }
 
-// تابع برای محاسبه مقدار خروجی بر اساس فرمول CPMM
-export function calculateOutputAmount(amountIn: string, reservoirIn: string, reservoirOut: string): string {
-  try {
-    // تبدیل مقادیر به اعداد
-    const amountInNum = Number.parseFloat(amountIn)
-    const reservoirInNum = Number.parseFloat(reservoirIn)
-    const reservoirOutNum = Number.parseFloat(reservoirOut)
-
-    if (
-      isNaN(amountInNum) ||
-      isNaN(reservoirInNum) ||
-      isNaN(reservoirOutNum) ||
-      amountInNum <= 0 ||
-      reservoirInNum <= 0 ||
-      reservoirOutNum <= 0
-    ) {
-      return "0"
-    }
-
-    // فرمول CPMM: amountOut = (reservoirOut * amountIn) / (reservoirIn + amountIn)
-    const amountOutNum = (reservoirOutNum * amountInNum) / (reservoirInNum + amountInNum)
-    return amountOutNum.toString()
-  } catch (error) {
-    console.error("خطا در محاسبه مقدار خروجی:", error)
-    return "0"
-  }
-}
+// Remove the calculateOutputAmount function since we won't be using it anymore
+// This function can be deleted:
 
 // تابع برای محاسبه حداقل مقدار خروجی با در نظر گرفتن لغزش
 export function calculateMinimumOutputWithSlippage(outputAmount: string, slippagePercentage: string): string {
@@ -462,10 +471,12 @@ export function calculateMinimumOutputWithSlippage(outputAmount: string, slippag
       return "0"
     }
 
-    // حداقل مقدار خروجی = مقدار خروجی * (1 - لغزش)
+    // Calculate minimum output amount with slippage
     const minOutputNum = outputAmountNum * (1 - slippageNum)
 
-    return minOutputNum.toString()
+    // Preserve the original decimal precision
+    const decimalPlaces = (outputAmount.split(".")[1] || "").length
+    return minOutputNum.toFixed(decimalPlaces)
   } catch (error) {
     console.error("خطا در محاسبه حداقل مقدار خروجی:", error)
     return "0"
@@ -723,7 +734,7 @@ export async function getUserLPTokens(tokenAAddress: string, tokenBAddress: stri
   }
 }
 
-// تابع برای دریافت رویدادهای Swapped از قرارداد استخر
+// Update the getSwapEvents function to include transaction hash
 export async function getSwapEvents(tokenAAddress: string, tokenBAddress: string) {
   try {
     // مرتب‌سازی آدرس‌ها
@@ -733,63 +744,138 @@ export async function getSwapEvents(tokenAAddress: string, tokenBAddress: string
     const poolExists = await checkPoolExists(tokenA, tokenB)
 
     if (!poolExists) {
-      console.log("رویدادهای Swapped: استخر برای این جفت توکن وجود ندارد")
+      console.log("رویدادهای Swap: استخر برای این جفت توکن وجود ندارد")
       return []
     }
 
     // اتصال به استخر
     const { contract: pool, provider } = await connectToPool(tokenA, tokenB)
 
+    // Check if the contract has the necessary event
+    if (!pool || !pool.filters) {
+      console.error("Contract or filters not available")
+      return []
+    }
+
     // تشخیص نسخه ethers
     if (typeof ethers.utils !== "undefined") {
       // ethers v5
-      // تعریف فیلتر برای رویداد Swapped
-      const filter = pool.filters.Swapped()
+      try {
+        // Check if the Swap event exists in the contract
+        if (!pool.filters.Swap) {
+          console.error("Swap event not found in contract")
+          return []
+        }
 
-      // دریافت رویدادها (آخرین 100 بلاک)
-      const latestBlock = await provider.getBlockNumber()
-      const fromBlock = latestBlock - 100 > 0 ? latestBlock - 100 : 0
-      console.log(fromBlock)
-      const events = await pool.queryFilter(filter, fromBlock, latestBlock)
+        // تعریف فیلتر برای رویداد Swap
+        const filter = pool.filters.Swap()
 
-      // نمایش رویدادها در کنسول
-      console.log("--- رویدادهای Swapped ---")
-      events.forEach((event) => {
-        console.log(`event Swapped(address indexed user, uint256 amountIn, uint256 amountOut, uint256 reward);`)
-        console.log(`کاربر: ${event.args.user}`)
-        console.log(`مقدار ورودی: ${ethers.utils.formatEther(event.args.amountIn)}`)
-        console.log(`مقدار خروجی: ${ethers.utils.formatEther(event.args.amountOut)}`)
-        console.log(`پاداش: ${ethers.utils.formatEther(event.args.reward)}`)
-        console.log("-------------------")
-      })
+        // دریافت رویدادها (آخرین 100 بلاک)
+        const latestBlock = await provider.getBlockNumber()
+        const fromBlock = latestBlock - 10000 > 0 ? latestBlock - 10000 : 0
+        const events = await pool.queryFilter(filter, fromBlock, latestBlock)
 
-      return events
+        // Add block timestamps to events
+        const eventsWithTimestamps = await Promise.all(
+          events.map(async (event) => {
+            try {
+              const block = await provider.getBlock(event.blockNumber)
+              return {
+                ...event,
+                blockTimestamp: block ? block.timestamp : Math.floor(Date.now() / 1000),
+                transactionHash: event.transactionHash, // Include transaction hash
+                args: {
+                  ...event.args,
+                  user: event.args?.user || "",
+                  isAToB: event.args?.isAToB !== undefined ? event.args.isAToB : true,
+                  amountIn: event.args?.amountIn || ethers.BigNumber.from(0),
+                  amountOut: event.args?.amountOut || ethers.BigNumber.from(0),
+                },
+              }
+            } catch (error) {
+              console.error("Error fetching block data:", error)
+              return {
+                ...event,
+                blockTimestamp: Math.floor(Date.now() / 1000),
+                transactionHash: event.transactionHash, // Include transaction hash
+                args: {
+                  user: event.args?.user || "",
+                  isAToB: event.args?.isAToB !== undefined ? event.args.isAToB : true,
+                  amountIn: event.args?.amountIn || ethers.BigNumber.from(0),
+                  amountOut: event.args?.amountOut || ethers.BigNumber.from(0),
+                },
+              }
+            }
+          }),
+        )
+
+        return eventsWithTimestamps
+      } catch (error) {
+        console.error("Error processing events (ethers v5):", error)
+        return []
+      }
     } else {
       // ethers v6
-      // تعریف فیلتر برای رویداد Swapped
-      const filter = pool.filters.Swapped
+      try {
+        // Check if the contract interface has the Swap event
+        const hasSwapEvent = pool.interface.fragments.some(
+          (fragment) => fragment.type === "event" && fragment.name === "Swap",
+        )
 
-      // دریافت رویدادها (آخرین 100 بلاک)
-      const latestBlock = BigInt(await provider.getBlockNumber())
-      // در ethers v6، شماره بلاک‌ها از نوع BigInt هستند
-      const fromBlock = latestBlock - BigInt(100) > BigInt(0) ? latestBlock - BigInt(100) : BigInt(0)
-      const events = await pool.queryFilter(filter, fromBlock, latestBlock)
+        if (!hasSwapEvent) {
+          console.error("Swap event not found in contract interface")
+          return []
+        }
 
-      // نمایش رویدادها در کنسول
-      console.log("--- رویدادهای Swapped ---")
-      events.forEach((event) => {
-        console.log(`event Swapped(address indexed user, uint256 amountIn, uint256 amountOut, uint256 reward);`)
-        console.log(`کاربر: ${event.args[0]}`)
-        console.log(`مقدار ورودی: ${ethers.formatEther(event.args[1])}`)
-        console.log(`مقدار خروجی: ${ethers.formatEther(event.args[2])}`)
-        console.log(`پاداش: ${ethers.formatEther(event.args[3])}`)
-        console.log("-------------------")
-      })
+        // دریافت رویدادها (آخرین 100 بلاک)
+        const latestBlock = BigInt(await provider.getBlockNumber())
+        // در ethers v6، شماره بلاک‌ها از نوع BigInt هستند
+        const fromBlock = latestBlock - BigInt(10000) > BigInt(0) ? latestBlock - BigInt(10000) : BigInt(0)
 
-      return events
+        // Use getEvents instead of queryFilter with the event name
+        const events = await pool.queryFilter(pool.filters.Swap, fromBlock, latestBlock)
+
+        // Add block timestamps to events
+        const eventsWithTimestamps = await Promise.all(
+          events.map(async (event) => {
+            try {
+              const block = await provider.getBlock(event.blockNumber)
+              return {
+                ...event,
+                blockTimestamp: Number(block?.timestamp || 0),
+                transactionHash: event.transactionHash, // Include transaction hash
+                args: {
+                  user: event.args[0] || "",
+                  isAToB: event.args[1] !== undefined ? event.args[1] : true,
+                  amountIn: event.args[2] || BigInt(0),
+                  amountOut: event.args[3] || BigInt(0),
+                },
+              }
+            } catch (error) {
+              console.error("Error fetching block data:", error)
+              return {
+                ...event,
+                blockTimestamp: Math.floor(Date.now() / 1000),
+                transactionHash: event.transactionHash, // Include transaction hash
+                args: {
+                  user: event.args?.[0] || "",
+                  isAToB: event.args?.[1] !== undefined ? event.args[1] : true,
+                  amountIn: event.args?.[2] || BigInt(0),
+                  amountOut: event.args?.[3] || BigInt(0),
+                },
+              }
+            }
+          }),
+        )
+
+        return eventsWithTimestamps
+      } catch (error) {
+        console.error("Error processing events (ethers v6):", error)
+        return []
+      }
     }
   } catch (error) {
-    console.error("خطا در دریافت رویدادهای Swapped:", error)
+    console.error("خطا در دریافت رویدادهای Swap:", error)
     return []
   }
 }
@@ -894,7 +980,7 @@ export async function removeLiquidity(tokenAAddress: string, tokenBAddress: stri
 
     return true
   } catch (error) {
-    console.error("خطا در برداشت نقدینگی:", error)
+    console.error("خط در برداشت نقدینگی:", error)
     throw error
   }
 }
@@ -1028,6 +1114,146 @@ export async function estimateLPTokensToReceive(
   } catch (error) {
     console.error("خطا در تخمین تعداد توکن‌های LP:", error)
     return "0"
+  }
+}
+
+// Add this new function to get the exact output amount from the contract
+export async function getExactOutputAmount(
+  tokenAAddress: string,
+  tokenBAddress: string,
+  amountIn: string,
+  isAToB: boolean,
+) {
+  try {
+    // مرتب‌سازی آدرس‌ها
+    const { tokenA, tokenB, swapped } = sortTokenAddresses(tokenAAddress, tokenBAddress)
+
+    // بررسی وجود استخر
+    const poolExists = await checkPoolExists(tokenA, tokenB)
+
+    if (!poolExists) {
+      return "0"
+    }
+
+    // اتصال به استخر
+    const { contract: pool } = await connectToPool(tokenA, tokenB)
+
+    // دریافت اطلاعات توکن‌ها
+    const tokenAContract = await connectToToken(tokenA)
+    const tokenBContract = await connectToToken(tokenB)
+
+    const decimalsA = await tokenAContract.decimals()
+    const decimalsB = await tokenBContract.decimals()
+
+    // تبدیل مقدار ورودی به واحد وی
+    let amountInWei
+    if (typeof ethers.utils !== "undefined") {
+      // ethers v5
+      amountInWei = ethers.utils.parseUnits(amountIn, isAToB ? decimalsA : decimalsB)
+    } else {
+      // ethers v6
+      amountInWei = ethers.parseUnits(amountIn, isAToB ? decimalsA : decimalsB)
+    }
+
+    // استفاده از توابع تقریبی جدید برای محاسبه مقدار خروجی
+    let outputAmount
+
+    // تنظیم جهت مبادله با توجه به اینکه آیا توکن‌ها جابجا شده‌اند یا خیر
+    const effectiveIsAToB = swapped ? !isAToB : isAToB
+
+    if (effectiveIsAToB) {
+      // محاسبه مقدار توکن B که کاربر دریافت خواهد کرد با استفاده از تابع approxAForB
+      outputAmount = await pool.approxAForB(amountInWei)
+    } else {
+      // محاسبه مقدار توکن A که کاربر دریافت خواهد کرد با استفاده از تابع approxBForA
+      outputAmount = await pool.approxBForA(amountInWei)
+    }
+
+    // تبدیل مقدار خروجی به فرمت خوانا با حفظ تعداد اعشار توکن
+    const outputDecimals = isAToB ? decimalsB : decimalsA
+
+    if (typeof ethers.utils !== "undefined") {
+      // ethers v5
+      return ethers.utils.formatUnits(outputAmount, outputDecimals)
+    } else {
+      // ethers v6
+      return ethers.formatUnits(outputAmount, outputDecimals)
+    }
+  } catch (error) {
+    console.error("خطا در محاسبه مقدار خروجی تقریبی:", error)
+    return null
+  }
+}
+
+// تابع برای بررسی اعتبار آدرس قرارداد ERC20
+export async function isValidERC20(tokenAddress: string): Promise<boolean> {
+  try {
+    // اتصال به قرارداد
+    const tokenContract = await connectToToken(tokenAddress)
+
+    // بررسی وجود توابع استاندارد ERC20 - با مدیریت خطای هر تابع به صورت جداگانه
+    try {
+      await tokenContract.symbol()
+    } catch (error) {
+      console.error("Error calling symbol():", error)
+      return false
+    }
+
+    try {
+      await tokenContract.name()
+    } catch (error) {
+      console.error("Error calling name():", error)
+      return false
+    }
+
+    try {
+      await tokenContract.decimals()
+    } catch (error) {
+      console.error("Error calling decimals():", error)
+      return false
+    }
+
+    // اگر همه توابع با موفقیت اجرا شوند، قرارداد یک ERC20 معتبر است
+    return true
+  } catch (error) {
+    console.error("خطا در بررسی اعتبار توکن ERC20:", error)
+    return false
+  }
+}
+
+// تابع برای دریافت اطلاعات توکن ERC20
+export async function getERC20Info(tokenAddress: string): Promise<{ symbol: string; name: string; decimals: number }> {
+  try {
+    // اتصال به قرارداد
+    const tokenContract = await connectToToken(tokenAddress)
+
+    // دریافت اطلاعات توکن
+    const [symbol, name, decimals] = await Promise.all([
+      tokenContract.symbol(),
+      tokenContract.name(),
+      tokenContract.decimals(),
+    ])
+
+    return {
+      symbol,
+      name,
+      decimals: Number(decimals),
+    }
+  } catch (error) {
+    console.error("خطا در دریافت اطلاعات توکن ERC20:", error)
+    throw new Error("خطا در دریافت اطلاعات توکن")
+  }
+}
+
+// Add a new helper function to get token decimals
+export async function getTokenDecimals(tokenAddress: string): Promise<number> {
+  try {
+    const tokenContract = await connectToToken(tokenAddress)
+    const decimals = await tokenContract.decimals()
+    return Number(decimals)
+  } catch (error) {
+    console.error("خطا در دریافت تعداد اعشار توکن:", error)
+    return 18 // Default to 18 decimals as fallback
   }
 }
 

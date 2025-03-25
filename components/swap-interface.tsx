@@ -8,6 +8,7 @@ import { ConnectWallet } from "@/components/connect-wallet"
 import { NetworkWarning } from "@/components/network-warning"
 import { SwapForm } from "@/components/swap-form"
 import { LiquidityForm } from "@/components/liquidity-form"
+import { SwapHistory } from "@/components/swap-history"
 import { useWallet } from "@/hooks/use-wallet"
 import { usePool } from "@/hooks/use-pool"
 import { TOKEN_ADDRESSES } from "@/lib/contract-utils"
@@ -40,6 +41,7 @@ export function SwapInterface() {
     removeLiquidity,
     getRemoveLiquidityPreview,
     estimateLPTokens,
+    getSwapEvents,
   } = usePool({
     connected,
     account,
@@ -118,9 +120,10 @@ export function SwapInterface() {
             </div>
           ) : (
             <Tabs defaultValue="swap" value={activeTab} onValueChange={handleTabChange} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsList className="grid w-full grid-cols-3 mb-4">
                 <TabsTrigger value="swap">مبادله</TabsTrigger>
                 <TabsTrigger value="liquidity">نقدینگی</TabsTrigger>
+                <TabsTrigger value="history">تاریخچه</TabsTrigger>
               </TabsList>
 
               <TabsContent value="swap">
@@ -165,6 +168,19 @@ export function SwapInterface() {
                   isExpanded={isExpanded}
                   showPoolInfo={showPoolInfo}
                   onToggleExpand={toggleExpand}
+                />
+              </TabsContent>
+
+              <TabsContent value="history">
+                <SwapHistory
+                  tokenA={tokenA}
+                  tokenB={tokenB}
+                  tokenAAddress={tokenAAddress}
+                  tokenBAddress={tokenBAddress}
+                  poolExists={poolExists}
+                  getSwapEvents={getSwapEvents}
+                  disabled={!connected || !isCorrectNetwork}
+                  account={account}
                 />
               </TabsContent>
             </Tabs>
