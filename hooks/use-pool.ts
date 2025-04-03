@@ -60,28 +60,15 @@ const getPoolInfo = async (tokenAAddress: string, tokenBAddress: string) => {
 
     // تشخیص نسخه ethers
     let reservoirAFormatted, reservoirBFormatted
-    if (typeof ethers.utils !== "undefined") {
-      // ethers v5
-      reservoirAFormatted = ethers.utils.formatUnits(reservoirA, decimalsA)
-      reservoirBFormatted = ethers.utils.formatUnits(reservoirB, decimalsB)
-    } else {
-      // ethers v6
-      reservoirAFormatted = ethers.formatUnits(reservoirA, decimalsA)
-      reservoirBFormatted = ethers.formatUnits(reservoirB, decimalsB)
-    }
+    reservoirAFormatted = ethers.formatUnits(reservoirA, decimalsA)
+    reservoirBFormatted = ethers.formatUnits(reservoirB, decimalsB)
 
     // دریافت نرخ تبادل با فرمت جدید (دو مقدار)
     const [rateAtoB, rateBtoA] = await pool.getExchangeRate()
 
     // محاسبه نرخ تبادل
     let exchangeRate = "0"
-    if (typeof ethers.utils !== "undefined") {
-      // ethers v5
-      exchangeRate = ethers.utils.formatUnits(rateAtoB, 18)
-    } else {
-      // ethers v6
-      exchangeRate = ethers.formatUnits(rateAtoB, 18)
-    }
+    exchangeRate = ethers.formatUnits(rateAtoB, 18)
 
     return {
       exists: true,
@@ -103,8 +90,8 @@ const getPoolInfo = async (tokenAAddress: string, tokenBAddress: string) => {
 }
 
 // Function to format a number with a maximum of 6 decimal places
-const formatNumber = (number: ethers.BigNumber) => {
-  const formatted = ethers.utils.formatEther(number)
+const formatNumber = (number: bigint) => {
+  const formatted = ethers.formatEther(number)
   const parts = formatted.split(".")
   if (parts.length > 1) {
     return parts[0] + "." + parts[1].substring(0, 6)
@@ -188,13 +175,7 @@ export function usePool({ connected, account, isCorrectNetwork, tokenAAddress, t
 
           // تبدیل به فرمت خوانا
           let totalSupplyFormatted
-          if (typeof ethers.utils !== "undefined") {
-            // ethers v5
-            totalSupplyFormatted = ethers.utils.formatEther(totalSupply)
-          } else {
-            // ethers v6
-            totalSupplyFormatted = ethers.formatEther(totalSupply)
-          }
+          totalSupplyFormatted = ethers.formatEther(totalSupply)
 
           setTotalLpSupply(totalSupplyFormatted)
         }
@@ -267,7 +248,13 @@ export function usePool({ connected, account, isCorrectNetwork, tokenAAddress, t
 
   // تابع برای انجام مبادله
   const handleSwap = useCallback(
-    async (amountIn: string, minAmountOut: string, isAToB: boolean, onSuccess?: () => void) => {
+    async (
+      amountIn: string,
+      minAmountOut: string,
+      isAToB: boolean,
+      onSuccess?: () => void,
+      onStatusUpdate?: (status: "approving" | "swapping" | "completed" | "error") => void,
+    ) => {
       if (!connected) {
         toast({
           title: "خطا",
@@ -313,9 +300,9 @@ export function usePool({ connected, account, isCorrectNetwork, tokenAAddress, t
         // اگر ترتیب عوض شده باشد، این منطق معکوس می‌شود
 
         if ((isOriginalOrder && isAToB) || (!isOriginalOrder && !isAToB)) {
-          await swapAForB(firstToken, secondToken, amountIn, minAmountOut)
+          await swapAForB(firstToken, secondToken, amountIn, minAmountOut, onStatusUpdate)
         } else {
-          await swapBForA(firstToken, secondToken, amountIn, minAmountOut)
+          await swapBForA(firstToken, secondToken, amountIn, minAmountOut, onStatusUpdate)
         }
 
         toast({
@@ -574,7 +561,7 @@ export function usePool({ connected, account, isCorrectNetwork, tokenAAddress, t
         }
 
         // Transform events into a more usable format
-        return events.map((event, index) => {
+        const formattedEvents = events.map((event, index) => {
           try {
             // Use the isAToB field from the event to determine direction
             // We need to account for whether tokens were swapped in sortTokenAddresses
@@ -590,16 +577,8 @@ export function usePool({ connected, account, isCorrectNetwork, tokenAAddress, t
             return {
               id: `${event.blockNumber || 0}-${index}`,
               user: event.args?.user || "",
-              amountIn: event.args?.amountIn
-                ? typeof ethers.utils !== "undefined"
-                  ? ethers.utils.formatEther(event.args.amountIn)
-                  : ethers.formatEther(event.args.amountIn)
-                : "0",
-              amountOut: event.args?.amountOut
-                ? typeof ethers.utils !== "undefined"
-                  ? ethers.utils.formatEther(event.args.amountOut)
-                  : ethers.formatEther(event.args.amountOut)
-                : "0",
+              amountIn: event.args?.amountIn ? ethers.formatEther(event.args.amountIn) : "0",
+              amountOut: event.args?.amountOut ? ethers.formatEther(event.args.amountOut) : "0",
               timestamp: event.blockTimestamp || Math.floor(Date.now() / 1000),
               tokenIn: tokenIn,
               tokenOut: tokenOut,
@@ -619,6 +598,9 @@ export function usePool({ connected, account, isCorrectNetwork, tokenAAddress, t
             }
           }
         })
+
+        // Return all events for chart data, but only show the most recent 5 in the history UI
+        return formattedEvents
       } catch (error) {
         console.error("Error getting swap events:", error)
         return []

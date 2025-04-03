@@ -1,5 +1,6 @@
 import { AnimatedBackground } from "@/components/animated-background"
 import { SwapInterface } from "@/components/swap-interface"
+import { TOKEN_ADDRESSES } from "@/lib/constants"
 
 export default function Home() {
   return (
@@ -7,7 +8,12 @@ export default function Home() {
       <AnimatedBackground />
       <div className="z-10 w-full items-center justify-between text-sm">
         <h1 className="text-3xl font-bold text-center mb-8">🥝 کیوی‌سواپ</h1>
-        <SwapInterface />
+        <SwapInterface
+          defaultTokenA="IRT"
+          defaultTokenAAddress={TOKEN_ADDRESSES.IRT}
+          defaultTokenB="USDT"
+          defaultTokenBAddress={TOKEN_ADDRESSES.USDT}
+        />
       </div>
     </main>
   )

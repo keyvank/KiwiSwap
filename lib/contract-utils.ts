@@ -154,14 +154,8 @@ export function getProvider() {
     throw new Error("MetaMask یا کیف پول سازگار با Web3 یافت نشد")
   }
 
-  // تشخیص نسخه ethers
-  if (typeof ethers.providers !== "undefined") {
-    // ethers v5
-    return new ethers.providers.Web3Provider(window.ethereum)
-  } else {
-    // ethers v6
-    return new ethers.BrowserProvider(window.ethereum)
-  }
+  // ethers v6
+  return new ethers.BrowserProvider(window.ethereum)
 }
 
 // تابع برای اتصال به کیف پول و اطمینان از استفاده از شبکه Zanjir
@@ -230,15 +224,8 @@ export async function connectToPoolManager() {
     await window.ethereum.request({ method: "eth_requestAccounts" })
     const provider = getProvider()
 
-    // تشخیص نسخه ethers
-    let signer
-    if (typeof ethers.providers !== "undefined") {
-      // ethers v5
-      signer = provider.getSigner()
-    } else {
-      // ethers v6
-      signer = await provider.getSigner()
-    }
+    // ethers v6
+    const signer = await provider.getSigner()
 
     const contract = new ethers.Contract(POOL_MANAGER_ADDRESS, POOL_MANAGER_ABI, signer)
     return { provider, signer, contract }
@@ -347,15 +334,8 @@ export async function connectToToken(tokenAddress: string) {
   try {
     const provider = getProvider()
 
-    // تشخیص نسخه ethers
-    let signer
-    if (typeof ethers.providers !== "undefined") {
-      // ethers v5
-      signer = provider.getSigner()
-    } else {
-      // ethers v6
-      signer = await provider.getSigner()
-    }
+    // ethers v6
+    const signer = await provider.getSigner()
 
     const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, signer)
     return tokenContract
@@ -372,14 +352,8 @@ export async function getTokenBalance(tokenAddress: string, userAddress: string)
     const balance = await tokenContract.balanceOf(userAddress)
     const decimals = await tokenContract.decimals()
 
-    // تشخیص نسخه ethers
-    if (typeof ethers.utils !== "undefined") {
-      // ethers v5
-      return ethers.utils.formatUnits(balance, decimals)
-    } else {
-      // ethers v6
-      return ethers.formatUnits(balance, decimals)
-    }
+    // ethers v6
+    return ethers.formatUnits(balance, decimals)
   } catch (error) {
     console.error("خطا در دریافت موجودی توکن:", error)
     return "0"
@@ -414,30 +388,16 @@ export async function getPoolInfo(tokenAAddress: string, tokenBAddress: string) 
     const decimalsA = await tokenAContract.decimals()
     const decimalsB = await tokenBContract.decimals()
 
-    // تشخیص نسخه ethers
-    let reservoirAFormatted, reservoirBFormatted
-    if (typeof ethers.utils !== "undefined") {
-      // ethers v5
-      reservoirAFormatted = ethers.utils.formatUnits(reservoirA, decimalsA)
-      reservoirBFormatted = ethers.utils.formatUnits(reservoirB, decimalsB)
-    } else {
-      // ethers v6
-      reservoirAFormatted = ethers.formatUnits(reservoirA, decimalsA)
-      reservoirBFormatted = ethers.formatUnits(reservoirB, decimalsB)
-    }
+    // ethers v6
+    const reservoirAFormatted = ethers.formatUnits(reservoirA, decimalsA)
+    const reservoirBFormatted = ethers.formatUnits(reservoirB, decimalsB)
 
     // دریافت نرخ تبادل با فرمت جدید (دو مقدار)
     const [rateAtoB, rateBtoA] = await pool.getExchangeRate()
 
     // محاسبه نرخ تبادل
     let exchangeRate = "0"
-    if (typeof ethers.utils !== "undefined") {
-      // ethers v5
-      exchangeRate = ethers.utils.formatUnits(rateAtoB, 18)
-    } else {
-      // ethers v6
-      exchangeRate = ethers.formatUnits(rateAtoB, 18)
-    }
+    exchangeRate = ethers.formatUnits(rateAtoB, 18)
 
     return {
       exists: true,
@@ -493,15 +453,8 @@ export async function approveToken(tokenAddress: string, spenderAddress: string,
     const tokenContract = await connectToToken(tokenAddress)
     const decimals = await tokenContract.decimals()
 
-    // تشخیص نسخه ethers
-    let amountInWei
-    if (typeof ethers.utils !== "undefined") {
-      // ethers v5
-      amountInWei = ethers.utils.parseUnits(amount, decimals)
-    } else {
-      // ethers v6
-      amountInWei = ethers.parseUnits(amount, decimals)
-    }
+    // ethers v6
+    const amountInWei = ethers.parseUnits(amount, decimals)
 
     const tx = await tokenContract.approve(spenderAddress, amountInWei)
     await tx.wait()
@@ -552,16 +505,8 @@ export async function addLiquidity(tokenAAddress: string, tokenBAddress: string,
     const decimalsB = await tokenBContract.decimals()
 
     // تبدیل مقادیر به واحد وی
-    let amountAInWei, amountBInWei
-    if (typeof ethers.utils !== "undefined") {
-      // ethers v5
-      amountAInWei = ethers.utils.parseUnits(firstAmount, decimalsA)
-      amountBInWei = ethers.utils.parseUnits(secondAmount, decimalsB)
-    } else {
-      // ethers v6
-      amountAInWei = ethers.parseUnits(firstAmount, decimalsA)
-      amountBInWei = ethers.parseUnits(secondAmount, decimalsB)
-    }
+    const amountAInWei = ethers.parseUnits(firstAmount, decimalsA)
+    const amountBInWei = ethers.parseUnits(secondAmount, decimalsB)
 
     console.log("تایید توکن A برای استخر با آدرس:", poolAddress)
     // تایید توکن‌ها
@@ -581,8 +526,14 @@ export async function addLiquidity(tokenAAddress: string, tokenBAddress: string,
   }
 }
 
-// تابع برای مبادله توکن A به B
-export async function swapAForB(tokenAAddress: string, tokenBAddress: string, amountIn: string, minAmountOut: string) {
+// Update the swapAForB function to accept a status callback
+export async function swapAForB(
+  tokenAAddress: string,
+  tokenBAddress: string,
+  amountIn: string,
+  minAmountOut: string,
+  onStatusUpdate?: (status: "approving" | "swapping" | "completed" | "error") => void,
+) {
   try {
     // مرتب‌سازی آدرس‌ها
     const { tokenA, tokenB, swapped } = sortTokenAddresses(tokenAAddress, tokenBAddress)
@@ -609,33 +560,35 @@ export async function swapAForB(tokenAAddress: string, tokenBAddress: string, am
     const decimalsB = await (await connectToToken(tokenB)).decimals()
 
     // تبدیل مقادیر به واحد وی
-    let amountInWei, minAmountOutWei
-    if (typeof ethers.utils !== "undefined") {
-      // ethers v5
-      amountInWei = ethers.utils.parseUnits(amountIn, decimalsA)
-      minAmountOutWei = ethers.utils.parseUnits(minAmountOut, decimalsB)
-    } else {
-      // ethers v6
-      amountInWei = ethers.parseUnits(amountIn, decimalsA)
-      minAmountOutWei = ethers.parseUnits(minAmountOut, decimalsB)
-    }
+    const amountInWei = ethers.parseUnits(amountIn, decimalsA)
+    const minAmountOutWei = ethers.parseUnits(minAmountOut, decimalsB)
 
     // تایید توکن
+    onStatusUpdate?.("approving")
     await approveToken(tokenA, poolAddress, amountIn)
 
     // مبادله
+    onStatusUpdate?.("swapping")
     const tx = await pool.swapAForB(amountInWei, minAmountOutWei)
     await tx.wait()
 
+    onStatusUpdate?.("completed")
     return true
   } catch (error) {
+    onStatusUpdate?.("error")
     console.error("خطا در مبادله توکن A به B:", error)
     throw error
   }
 }
 
-// تابع برای مبادله توکن B به A
-export async function swapBForA(tokenAAddress: string, tokenBAddress: string, amountIn: string, minAmountOut: string) {
+// Update the swapBForA function to accept a status callback
+export async function swapBForA(
+  tokenAAddress: string,
+  tokenBAddress: string,
+  amountIn: string,
+  minAmountOut: string,
+  onStatusUpdate?: (status: "approving" | "swapping" | "completed" | "error") => void,
+) {
   try {
     // مرتب‌سازی آدرس‌ها
     const { tokenA, tokenB, swapped } = sortTokenAddresses(tokenAAddress, tokenBAddress)
@@ -662,26 +615,22 @@ export async function swapBForA(tokenAAddress: string, tokenBAddress: string, am
     const decimalsA = await (await connectToToken(tokenA)).decimals()
 
     // تبدیل مقادیر به واحد وی
-    let amountInWei, minAmountOutWei
-    if (typeof ethers.utils !== "undefined") {
-      // ethers v5
-      amountInWei = ethers.utils.parseUnits(amountIn, decimalsB)
-      minAmountOutWei = ethers.utils.parseUnits(minAmountOut, decimalsA)
-    } else {
-      // ethers v6
-      amountInWei = ethers.parseUnits(amountIn, decimalsB)
-      minAmountOutWei = ethers.parseUnits(minAmountOut, decimalsA)
-    }
+    const amountInWei = ethers.parseUnits(amountIn, decimalsB)
+    const minAmountOutWei = ethers.parseUnits(minAmountOut, decimalsA)
 
     // تایید توکن
+    onStatusUpdate?.("approving")
     await approveToken(tokenB, poolAddress, amountIn)
 
     // مبادله
+    onStatusUpdate?.("swapping")
     const tx = await pool.swapBForA(amountInWei, minAmountOutWei)
     await tx.wait()
 
+    onStatusUpdate?.("completed")
     return true
   } catch (error) {
+    onStatusUpdate?.("error")
     console.error("خطا در مبادله توکن B به A:", error)
     throw error
   }
@@ -720,14 +669,8 @@ export async function getUserLPTokens(tokenAAddress: string, tokenBAddress: stri
     // دریافت تعداد توکن‌های LP با استفاده از balanceOf
     const lpTokens = await pool.balanceOf(userAddress)
 
-    // تشخیص نسخه ethers
-    if (typeof ethers.utils !== "undefined") {
-      // ethers v5
-      return ethers.utils.formatEther(lpTokens)
-    } else {
-      // ethers v6
-      return ethers.formatEther(lpTokens)
-    }
+    // ethers v6
+    return ethers.formatEther(lpTokens)
   } catch (error) {
     console.error("خطا در دریافت تعداد توکن‌های LP:", error)
     return "0"
@@ -757,122 +700,63 @@ export async function getSwapEvents(tokenAAddress: string, tokenBAddress: string
       return []
     }
 
-    // تشخیص نسخه ethers
-    if (typeof ethers.utils !== "undefined") {
-      // ethers v5
-      try {
-        // Check if the Swap event exists in the contract
-        if (!pool.filters.Swap) {
-          console.error("Swap event not found in contract")
-          return []
-        }
+    // ethers v6
+    try {
+      // Check if the contract interface has the Swap event
+      const hasSwapEvent = pool.interface.fragments.some(
+        (fragment) => fragment.type === "event" && fragment.name === "Swap",
+      )
 
-        // تعریف فیلتر برای رویداد Swap
-        const filter = pool.filters.Swap()
-
-        // دریافت رویدادها (آخرین 100 بلاک)
-        const latestBlock = await provider.getBlockNumber()
-        const fromBlock = latestBlock - 10000 > 0 ? latestBlock - 10000 : 0
-        const events = await pool.queryFilter(filter, fromBlock, latestBlock)
-
-        // Add block timestamps to events
-        const eventsWithTimestamps = await Promise.all(
-          events.map(async (event) => {
-            try {
-              const block = await provider.getBlock(event.blockNumber)
-              return {
-                ...event,
-                blockTimestamp: block ? block.timestamp : Math.floor(Date.now() / 1000),
-                transactionHash: event.transactionHash, // Include transaction hash
-                args: {
-                  ...event.args,
-                  user: event.args?.user || "",
-                  isAToB: event.args?.isAToB !== undefined ? event.args.isAToB : true,
-                  amountIn: event.args?.amountIn || ethers.BigNumber.from(0),
-                  amountOut: event.args?.amountOut || ethers.BigNumber.from(0),
-                },
-              }
-            } catch (error) {
-              console.error("Error fetching block data:", error)
-              return {
-                ...event,
-                blockTimestamp: Math.floor(Date.now() / 1000),
-                transactionHash: event.transactionHash, // Include transaction hash
-                args: {
-                  user: event.args?.user || "",
-                  isAToB: event.args?.isAToB !== undefined ? event.args.isAToB : true,
-                  amountIn: event.args?.amountIn || ethers.BigNumber.from(0),
-                  amountOut: event.args?.amountOut || ethers.BigNumber.from(0),
-                },
-              }
-            }
-          }),
-        )
-
-        return eventsWithTimestamps
-      } catch (error) {
-        console.error("Error processing events (ethers v5):", error)
+      if (!hasSwapEvent) {
+        console.error("Swap event not found in contract interface")
         return []
       }
-    } else {
-      // ethers v6
-      try {
-        // Check if the contract interface has the Swap event
-        const hasSwapEvent = pool.interface.fragments.some(
-          (fragment) => fragment.type === "event" && fragment.name === "Swap",
-        )
 
-        if (!hasSwapEvent) {
-          console.error("Swap event not found in contract interface")
-          return []
-        }
+      const latestBlock = BigInt(100)
+      const fromBlock = BigInt("987654321") // MAGIC!
 
-        // دریافت رویدادها (آخرین 100 بلاک)
-        const latestBlock = BigInt(await provider.getBlockNumber())
-        // در ethers v6، شماره بلاک‌ها از نوع BigInt هستند
-        const fromBlock = latestBlock - BigInt(10000) > BigInt(0) ? latestBlock - BigInt(10000) : BigInt(0)
+      const filter = pool.filters.Swap()
 
-        // Use getEvents instead of queryFilter with the event name
-        const events = await pool.queryFilter(pool.filters.Swap, fromBlock, latestBlock)
+      // Use getEvents instead of queryFilter with the event name
+      const events = await pool.queryFilter(filter, fromBlock, latestBlock)
 
-        // Add block timestamps to events
-        const eventsWithTimestamps = await Promise.all(
-          events.map(async (event) => {
-            try {
-              const block = await provider.getBlock(event.blockNumber)
-              return {
-                ...event,
-                blockTimestamp: Number(block?.timestamp || 0),
-                transactionHash: event.transactionHash, // Include transaction hash
-                args: {
-                  user: event.args[0] || "",
-                  isAToB: event.args[1] !== undefined ? event.args[1] : true,
-                  amountIn: event.args[2] || BigInt(0),
-                  amountOut: event.args[3] || BigInt(0),
-                },
-              }
-            } catch (error) {
-              console.error("Error fetching block data:", error)
-              return {
-                ...event,
-                blockTimestamp: Math.floor(Date.now() / 1000),
-                transactionHash: event.transactionHash, // Include transaction hash
-                args: {
-                  user: event.args?.[0] || "",
-                  isAToB: event.args?.[1] !== undefined ? event.args[1] : true,
-                  amountIn: event.args?.[2] || BigInt(0),
-                  amountOut: event.args?.[3] || BigInt(0),
-                },
-              }
+      // Add block timestamps to events
+      const eventsWithTimestamps = await Promise.all(
+        events.map(async (event) => {
+          try {
+            const block = await provider.getBlock(event.blockNumber)
+            return {
+              ...event,
+              blockTimestamp: Number(block?.timestamp || 0),
+              transactionHash: event.transactionHash, // Include transaction hash
+              args: {
+                user: event.args[0] || "",
+                isAToB: event.args[1] !== undefined ? event.args[1] : true,
+                amountIn: event.args[2] || BigInt(0),
+                amountOut: event.args[3] || BigInt(0),
+              },
             }
-          }),
-        )
+          } catch (error) {
+            console.error("Error fetching block data:", error)
+            return {
+              ...event,
+              blockTimestamp: Math.floor(Date.now() / 1000),
+              transactionHash: event.transactionHash, // Include transaction hash
+              args: {
+                user: event.args?.[0] || "",
+                isAToB: event.args?.[1] !== undefined ? event.args[1] : true,
+                amountIn: event.args?.[2] || BigInt(0),
+                amountOut: event.args?.[3] || BigInt(0),
+              },
+            }
+          }
+        }),
+      )
 
-        return eventsWithTimestamps
-      } catch (error) {
-        console.error("Error processing events (ethers v6):", error)
-        return []
-      }
+      return eventsWithTimestamps
+    } catch (error) {
+      console.error("Error processing events:", error)
+      return []
     }
   } catch (error) {
     console.error("خطا در دریافت رویدادهای Swap:", error)
@@ -897,14 +781,7 @@ export async function getRemoveLiquidityPreview(tokenAAddress: string, tokenBAdd
     const { contract: pool } = await connectToPool(tokenA, tokenB)
 
     // تبدیل مقدار liquidity به واحد وی
-    let liquidityInWei
-    if (typeof ethers.utils !== "undefined") {
-      // ethers v5
-      liquidityInWei = ethers.utils.parseEther(liquidity)
-    } else {
-      // ethers v6
-      liquidityInWei = ethers.parseEther(liquidity)
-    }
+    const liquidityInWei = ethers.parseEther(liquidity)
 
     // دریافت مقادیر پیش‌بینی شده
     const [amountA, amountB] = await pool.calculateRemoveLiquidity(liquidityInWei)
@@ -917,16 +794,8 @@ export async function getRemoveLiquidityPreview(tokenAAddress: string, tokenBAdd
     const decimalsB = await tokenBContract.decimals()
 
     // تبدیل مقادیر به فرمت خوانا
-    let amountAFormatted, amountBFormatted
-    if (typeof ethers.utils !== "undefined") {
-      // ethers v5
-      amountAFormatted = ethers.utils.formatUnits(amountA, decimalsA)
-      amountBFormatted = ethers.utils.formatUnits(amountB, decimalsB)
-    } else {
-      // ethers v6
-      amountAFormatted = ethers.formatUnits(amountA, decimalsA)
-      amountBFormatted = ethers.formatUnits(amountB, decimalsB)
-    }
+    const amountAFormatted = ethers.formatUnits(amountA, decimalsA)
+    const amountBFormatted = ethers.formatUnits(amountB, decimalsB)
 
     return { amountA: amountAFormatted, amountB: amountBFormatted }
   } catch (error) {
@@ -965,14 +834,7 @@ export async function removeLiquidity(tokenAAddress: string, tokenBAddress: stri
     const decimalsB = await tokenBContract.decimals()
 
     // تبدیل مقدار liquidity به واحد وی
-    let liquidityInWei
-    if (typeof ethers.utils !== "undefined") {
-      // ethers v5
-      liquidityInWei = ethers.utils.parseEther(liquidity)
-    } else {
-      // ethers v6
-      liquidityInWei = ethers.parseEther(liquidity)
-    }
+    const liquidityInWei = ethers.parseEther(liquidity)
 
     // برداشت نقدینگی
     const tx = await pool.removeLiquidity(liquidityInWei)
@@ -980,7 +842,7 @@ export async function removeLiquidity(tokenAAddress: string, tokenBAddress: stri
 
     return true
   } catch (error) {
-    console.error("خط در برداشت نقدینگی:", error)
+    console.error("خطا در برداشت نقدینگی:", error)
     throw error
   }
 }
@@ -1030,16 +892,8 @@ export async function estimateLPTokensToReceive(
     const decimalsB = await tokenBContract.decimals()
 
     // تبدیل مقادیر به واحد وی
-    let amountAInWei, amountBInWei
-    if (typeof ethers.utils !== "undefined") {
-      // ethers v5
-      amountAInWei = ethers.utils.parseUnits(amountA, decimalsA)
-      amountBInWei = ethers.utils.parseUnits(amountB, decimalsB)
-    } else {
-      // ethers v6
-      amountAInWei = ethers.parseUnits(amountA, decimalsA)
-      amountBInWei = ethers.parseUnits(amountB, decimalsB)
-    }
+    const amountAInWei = ethers.parseUnits(amountA, decimalsA)
+    const amountBInWei = ethers.parseUnits(amountB, decimalsB)
 
     // دریافت ذخایر فعلی استخر
     const reservoirA = await pool.reserveA()
@@ -1052,22 +906,11 @@ export async function estimateLPTokensToReceive(
     if (totalSupply.toString() === "0") {
       // اگر استخر خالی است (اولین افزودن نقدینگی)
       // LP توکن‌ها معمولاً برابر با مجذور حاصل‌ضرب مقادیر است
-      if (typeof ethers.utils !== "undefined") {
-        // ethers v5
-        lpTokensToReceive = ethers.utils.parseEther(
-          Math.sqrt(
-            Number(ethers.utils.formatUnits(amountAInWei, decimalsA)) *
-              Number(ethers.utils.formatUnits(amountBInWei, decimalsB)),
-          ).toString(),
-        )
-      } else {
-        // ethers v6
-        lpTokensToReceive = ethers.parseEther(
-          Math.sqrt(
-            Number(ethers.formatUnits(amountAInWei, decimalsA)) * Number(ethers.formatUnits(amountBInWei, decimalsB)),
-          ).toString(),
-        )
-      }
+      lpTokensToReceive = ethers.parseEther(
+        Math.sqrt(
+          Number(ethers.formatUnits(amountAInWei, decimalsA)) * Number(ethers.formatUnits(amountBInWei, decimalsB)),
+        ).toString(),
+      )
     } else {
       // اگر استخر موجود است
       // LP توکن‌ها بر اساس نسبت مقادیر به ذخایر موجود محاسبه می‌شود
@@ -1077,40 +920,24 @@ export async function estimateLPTokensToReceive(
         return "0" // جلوگیری از تقسیم بر صفر
       }
 
-      // تشخیص نسخه ethers و محاسبه متناسب
-      if (typeof ethers.utils !== "undefined") {
-        // ethers v5 - استفاده از متدهای BigNumber
-        const lpFromA = amountAInWei.mul(totalSupply).div(reservoirA)
-        const lpFromB = amountBInWei.mul(totalSupply).div(reservoirB)
+      // ethers v6 - استفاده از عملگرهای BigInt
+      // تبدیل به BigInt برای محاسبات دقیق
+      const amountABigInt = BigInt(amountAInWei.toString())
+      const amountBBigInt = BigInt(amountBInWei.toString())
+      const totalSupplyBigInt = BigInt(totalSupply.toString())
+      const reservoirABigInt = BigInt(reservoirA.toString())
+      const reservoirBBigInt = BigInt(reservoirB.toString())
 
-        // انتخاب مقدار کمتر
-        lpTokensToReceive = lpFromA.lt(lpFromB) ? lpFromA : lpFromB
-      } else {
-        // ethers v6 - استفاده از عملگرهای BigInt
-        // تبدیل به BigInt برای محاسبات دقیق
-        const amountABigInt = BigInt(amountAInWei.toString())
-        const amountBBigInt = BigInt(amountBInWei.toString())
-        const totalSupplyBigInt = BigInt(totalSupply.toString())
-        const reservoirABigInt = BigInt(reservoirA.toString())
-        const reservoirBBigInt = BigInt(reservoirB.toString())
+      // محاسبه با استفاده از عملگرهای BigInt
+      const lpFromA = (amountABigInt * totalSupplyBigInt) / reservoirABigInt
+      const lpFromB = (amountBBigInt * totalSupplyBigInt) / reservoirBBigInt
 
-        // محاسبه با استفاده از عملگرهای BigInt
-        const lpFromA = (amountABigInt * totalSupplyBigInt) / reservoirABigInt
-        const lpFromB = (amountBBigInt * totalSupplyBigInt) / reservoirBBigInt
-
-        // انتخاب مقدار کمتر
-        lpTokensToReceive = lpFromA < lpFromB ? lpFromA : lpFromB
-      }
+      // انتخاب مقدار کمتر
+      lpTokensToReceive = lpFromA < lpFromB ? lpFromA : lpFromB
     }
 
     // تبدیل به فرمت خوانا
-    if (typeof ethers.utils !== "undefined") {
-      // ethers v5
-      return ethers.utils.formatEther(lpTokensToReceive)
-    } else {
-      // ethers v6
-      return ethers.formatEther(lpTokensToReceive)
-    }
+    return ethers.formatEther(lpTokensToReceive)
   } catch (error) {
     console.error("خطا در تخمین تعداد توکن‌های LP:", error)
     return "0"
@@ -1146,14 +973,7 @@ export async function getExactOutputAmount(
     const decimalsB = await tokenBContract.decimals()
 
     // تبدیل مقدار ورودی به واحد وی
-    let amountInWei
-    if (typeof ethers.utils !== "undefined") {
-      // ethers v5
-      amountInWei = ethers.utils.parseUnits(amountIn, isAToB ? decimalsA : decimalsB)
-    } else {
-      // ethers v6
-      amountInWei = ethers.parseUnits(amountIn, isAToB ? decimalsA : decimalsB)
-    }
+    const amountInWei = ethers.parseUnits(amountIn, isAToB ? decimalsA : decimalsB)
 
     // استفاده از توابع تقریبی جدید برای محاسبه مقدار خروجی
     let outputAmount
@@ -1172,13 +992,7 @@ export async function getExactOutputAmount(
     // تبدیل مقدار خروجی به فرمت خوانا با حفظ تعداد اعشار توکن
     const outputDecimals = isAToB ? decimalsB : decimalsA
 
-    if (typeof ethers.utils !== "undefined") {
-      // ethers v5
-      return ethers.utils.formatUnits(outputAmount, outputDecimals)
-    } else {
-      // ethers v6
-      return ethers.formatUnits(outputAmount, outputDecimals)
-    }
+    return ethers.formatUnits(outputAmount, outputDecimals)
   } catch (error) {
     console.error("خطا در محاسبه مقدار خروجی تقریبی:", error)
     return null

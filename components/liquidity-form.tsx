@@ -7,6 +7,7 @@ import { TokenInput } from "@/components/token-input"
 import { PoolStats } from "@/components/pool-stats"
 import { cn } from "@/lib/utils"
 import { formatNumber } from "@/lib/utils"
+import { TOKEN_PRIORITY } from "@/lib/token-priority"
 
 interface LiquidityFormProps {
   tokenA: string
@@ -217,6 +218,34 @@ export function LiquidityForm({
     return () => clearTimeout(timeoutId)
   }, [previewLiquidity, onGetRemovalPreview])
 
+  // Function to get the pool ratio display based on token priority
+  const getPoolRatioDisplay = () => {
+    if (
+      !poolExists ||
+      !reservoirA ||
+      !reservoirB ||
+      Number.parseFloat(reservoirA) <= 0 ||
+      Number.parseFloat(reservoirB) <= 0
+    ) {
+      return "N/A"
+    }
+
+    // Get priority of each token (default to -1 if not in the list)
+    const priorityA = TOKEN_PRIORITY[tokenA] ?? -1
+    const priorityB = TOKEN_PRIORITY[tokenB] ?? -1
+
+    // If token A has higher or equal priority, show A as base
+    if (priorityA >= priorityB) {
+      const rate = (Number.parseFloat(reservoirA) / Number.parseFloat(reservoirB)).toFixed(6)
+      return `1 ${tokenB} = ${rate} ${tokenA}`
+    }
+    // Otherwise show B as base
+    else {
+      const rate = (Number.parseFloat(reservoirB) / Number.parseFloat(reservoirA)).toFixed(6)
+      return `1 ${tokenA} = ${rate} ${tokenB}`
+    }
+  }
+
   return (
     <div className="relative" dir="rtl">
       <div
@@ -255,11 +284,7 @@ export function LiquidityForm({
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">نسبت فعلی:</span>
                 <span dir="ltr" className="text-sm font-medium font-mono">
-                  1 {tokenA} ={" "}
-                  {Number.parseFloat(reservoirA) > 0
-                    ? (Number.parseFloat(reservoirB) / Number.parseFloat(reservoirA)).toFixed(6)
-                    : "0"}{" "}
-                  {tokenB}
+                  {getPoolRatioDisplay()}
                 </span>
               </div>
             </div>
@@ -319,7 +344,7 @@ export function LiquidityForm({
                     value={previewLiquidity}
                     onChange={(e) => setPreviewLiquidity(e.target.value)}
                     className="flex-1 px-3 py-2 bg-background rounded-lg text-sm font-mono"
-                    dir="rtl"
+                    dir="ltr"
                   />
                   <span className="mr-2 text-sm flex items-center">
                     <Coins className="h-4 w-4 ml-1" />

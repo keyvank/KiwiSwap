@@ -3,6 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Droplets, Coins, PieChart } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
+import { TOKEN_PRIORITY } from "@/lib/token-priority"
 
 interface PoolStatsProps {
   exists: boolean
@@ -36,6 +37,34 @@ export function PoolStats({ exists, tokenA, tokenB, reservoirA, reservoirB, lpTo
     return sharePercentage.toFixed(2)
   }
 
+  // Function to get the pool ratio display based on token priority
+  const getPoolRatioDisplay = () => {
+    if (
+      !exists ||
+      !reservoirA ||
+      !reservoirB ||
+      Number.parseFloat(reservoirA) <= 0 ||
+      Number.parseFloat(reservoirB) <= 0
+    ) {
+      return "N/A"
+    }
+
+    // Get priority of each token (default to -1 if not in the list)
+    const priorityA = TOKEN_PRIORITY[tokenA] ?? -1
+    const priorityB = TOKEN_PRIORITY[tokenB] ?? -1
+
+    // If token A has higher or equal priority, show A as base
+    if (priorityA < priorityB) {
+      const rate = (Number.parseFloat(reservoirB) / Number.parseFloat(reservoirA)).toFixed(6)
+      return `1 ${tokenA} = ${rate} ${tokenB}`
+    }
+    // Otherwise show B as base
+    else {
+      const rate = (Number.parseFloat(reservoirA) / Number.parseFloat(reservoirB)).toFixed(6)
+      return `1 ${tokenB} = ${rate} ${tokenA}`
+    }
+  }
+
   if (!exists) {
     return (
       <Card className="bg-secondary/50 border-dashed border-muted">
@@ -57,7 +86,7 @@ export function PoolStats({ exists, tokenA, tokenB, reservoirA, reservoirB, lpTo
   return (
     <Card className="border-primary/20">
       <CardContent className="p-6">
-        <div className="flex items-center justify-between my-4">
+        <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-medium">اطلاعات استخر</h3>
           <div className="flex items-center gap-1 text-primary">
             <Droplets className="h-5 w-5" />
@@ -80,6 +109,12 @@ export function PoolStats({ exists, tokenA, tokenB, reservoirA, reservoirB, lpTo
                 <div className="text-xs text-muted-foreground mb-1">توکن {tokenB}</div>
                 <div className="font-medium">{formatNumber(reservoirB)}</div>
               </div>
+            </div>
+            <div className="mt-2 text-xs text-muted-foreground">
+              نسبت:{" "}
+              <span dir="ltr" className="font-mono">
+                {getPoolRatioDisplay()}
+              </span>
             </div>
           </div>
 

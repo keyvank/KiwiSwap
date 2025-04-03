@@ -1,12 +1,13 @@
 "use client"
 
+import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { ChevronDown, Plus, Check, AlertCircle } from "lucide-react"
@@ -28,6 +29,7 @@ import { useToast } from "@/hooks/use-toast"
 interface TokenSelectorProps {
   defaultToken?: string
   onSelect?: (token: string, address: string) => void
+  customToken?: TokenInfo
 }
 
 interface TokenInfo {
@@ -41,7 +43,7 @@ interface TokenInfo {
 // کلید ذخیره‌سازی توکن‌های سفارشی در localStorage
 const CUSTOM_TOKENS_STORAGE_KEY = "kiwiswap_custom_tokens"
 
-export function TokenSelector({ defaultToken = "ETH", onSelect }: TokenSelectorProps) {
+export function TokenSelector({ defaultToken = "ETH", onSelect, customToken }: TokenSelectorProps) {
   const [selectedToken, setSelectedToken] = useState(defaultToken)
   const [tokens, setTokens] = useState<TokenInfo[]>([
     {
@@ -65,7 +67,7 @@ export function TokenSelector({ defaultToken = "ETH", onSelect }: TokenSelectorP
     {
       symbol: "IRT",
       name: "تومان",
-      logo: "/placeholder.svg?height=32&width=32",
+      logo: "https://zanjir.xyz/irt.svg",
       address: TOKEN_ADDRESSES.IRT,
     },
     {
@@ -112,6 +114,25 @@ export function TokenSelector({ defaultToken = "ETH", onSelect }: TokenSelectorP
 
     loadCustomTokens()
   }, [])
+
+  // Add custom token if provided
+  useEffect(() => {
+    if (customToken && !tokens.some((t) => t.address.toLowerCase() === customToken.address.toLowerCase())) {
+      setTokens((prevTokens) => [
+        ...prevTokens,
+        {
+          ...customToken,
+          logo: customToken.logo || "/placeholder.svg?height=32&width=32",
+          isCustom: true,
+        },
+      ])
+
+      // If the custom token matches the default token, select it
+      if (customToken.symbol === defaultToken) {
+        setSelectedToken(customToken.symbol)
+      }
+    }
+  }, [customToken, defaultToken])
 
   // ذخیره توکن‌های سفارشی در localStorage
   const saveCustomTokens = (customTokens: TokenInfo[]) => {

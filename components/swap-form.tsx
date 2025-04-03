@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowDownUp, Info, Loader2 } from "lucide-react"
 import { TokenInput } from "@/components/token-input"
+import { TOKEN_PRIORITY } from "@/lib/token-priority"
 
 interface SwapFormProps {
   tokenA: string
@@ -16,7 +17,13 @@ interface SwapFormProps {
   exchangeRate: string
   onTokenASelect: (token: string, address: string) => void
   onTokenBSelect: (token: string, address: string) => void
-  onSwap: (amountIn: string, minAmountOut: string, isAToB: boolean, onSuccess?: () => void) => Promise<boolean>
+  onSwap: (
+    amountIn: string,
+    minAmountOut: string,
+    isAToB: boolean,
+    onSuccess?: () => void,
+    onStatusUpdate?: (status: "idle" | "approving" | "swapping" | "completed" | "error") => void,
+  ) => Promise<boolean>
   calculateOutput: (
     amountIn: string,
     isAToB: boolean,
@@ -24,16 +31,6 @@ interface SwapFormProps {
   ) => { outputAmount: string; minAmountOut: string }
   disabled: boolean
   account: string
-}
-
-// Define token priority for display (higher index = higher priority as base currency)
-const TOKEN_PRIORITY = {
-  ETH: 3,
-  BTC: 4,
-  SOL: 2,
-  USDT: 1,
-  IRT: 1,
-  DOGE: 0,
 }
 
 export function SwapForm({
@@ -60,6 +57,8 @@ export function SwapForm({
   const [isSwapping, setIsSwapping] = useState(false)
   // Add isCalculating state to track when we're calculating the output
   const [isCalculating, setIsCalculating] = useState(false)
+  // Add a new swapStatus state
+  const [swapStatus, setSwapStatus] = useState<"idle" | "approving" | "swapping" | "completed" | "error">("idle")
 
   // Add a new function to handle slippage changes
   const handleSlippageChange = async (newSlippage: string) => {
@@ -158,8 +157,10 @@ export function SwapForm({
     setDirection(direction === "AtoB" ? "BtoA" : "AtoB")
   }
 
+  // Update the handleSwap function to track the approval state
   const handleSwap = async () => {
     setIsSwapping(true)
+    setSwapStatus("idle")
     try {
       const success = await onSwap(
         direction === "AtoB" ? tokenAAmount : tokenBAmount,
@@ -171,6 +172,10 @@ export function SwapForm({
           setTokenBAmount("")
           setMinAmountOut("0")
         },
+        (status) => {
+          // Update the swap status based on the callback
+          setSwapStatus(status)
+        },
       )
 
       if (success && !tokenAAmount && !tokenBAmount) {
@@ -181,6 +186,7 @@ export function SwapForm({
       }
     } finally {
       setIsSwapping(false)
+      setSwapStatus("idle")
     }
   }
 
@@ -199,7 +205,7 @@ export function SwapForm({
     // If we have valid input and output amounts
     if (tokenAAmount && tokenBAmount && Number.parseFloat(tokenAAmount) > 0 && Number.parseFloat(tokenBAmount) > 0) {
       // If token A has higher or equal priority, show A as base
-      if (priorityA >= priorityB) {
+      if (priorityA < priorityB) {
         const rate = (Number.parseFloat(tokenBAmount) / Number.parseFloat(tokenAAmount)).toFixed(6)
         return (
           <span dir="ltr" className="font-mono">
@@ -224,6 +230,23 @@ export function SwapForm({
         1 {tokenA} = {Number.parseFloat(exchangeRate).toFixed(6)} {tokenB}
       </span>
     )
+  }
+
+  // Update the button text based on the current state
+  const getButtonText = () => {
+    if (isSwapping) {
+      if (swapStatus === "approving") {
+        return "در حال تایید توکن..."
+      } else if (swapStatus === "swapping") {
+        return "در حال مبادله..."
+      } else {
+        return "در حال پردازش..."
+      }
+    } else if (isCalculating) {
+      return "در حال محاسبه..."
+    } else {
+      return "مبادله"
+    }
   }
 
   return (
@@ -359,7 +382,7 @@ export function SwapForm({
         {isSwapping || isCalculating ? (
           <>
             <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-            {isSwapping ? "در حال مبادله..." : "در حال محاسبه..."}
+            {getButtonText()}
           </>
         ) : (
           "مبادله"

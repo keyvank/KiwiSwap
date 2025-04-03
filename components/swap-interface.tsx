@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Loader2 } from "lucide-react"
@@ -14,14 +14,37 @@ import { usePool } from "@/hooks/use-pool"
 import { TOKEN_ADDRESSES } from "@/lib/contract-utils"
 import { cn } from "@/lib/utils"
 
-export function SwapInterface() {
+interface CustomTokenInfo {
+  symbol: string
+  name: string
+  address: string
+  isCustom?: boolean
+  logo?: string
+}
+
+interface SwapInterfaceProps {
+  defaultTokenA?: string
+  defaultTokenAAddress?: string
+  defaultTokenB?: string
+  defaultTokenBAddress?: string
+  customToken?: CustomTokenInfo
+}
+
+export function SwapInterface({
+  defaultTokenA = "IRT",
+  defaultTokenAAddress = TOKEN_ADDRESSES.IRT,
+  defaultTokenB = "USDT",
+  defaultTokenBAddress = TOKEN_ADDRESSES.USDT,
+  customToken,
+}: SwapInterfaceProps) {
   const [activeTab, setActiveTab] = useState("swap")
-  const [tokenA, setTokenA] = useState("ETH")
-  const [tokenB, setTokenB] = useState("USDT")
-  const [tokenAAddress, setTokenAAddress] = useState(TOKEN_ADDRESSES.ETH)
-  const [tokenBAddress, setTokenBAddress] = useState(TOKEN_ADDRESSES.USDT)
+  const [tokenA, setTokenA] = useState(defaultTokenA)
+  const [tokenB, setTokenB] = useState(defaultTokenB)
+  const [tokenAAddress, setTokenAAddress] = useState(defaultTokenAAddress)
+  const [tokenBAddress, setTokenBAddress] = useState(defaultTokenBAddress)
   const [isExpanded, setIsExpanded] = useState(false)
   const [showPoolInfo, setShowPoolInfo] = useState(false)
+  const [customTokenAdded, setCustomTokenAdded] = useState(false)
 
   const { connected, account, isCorrectNetwork, connect, disconnect, switchNetwork } = useWallet()
 
@@ -50,6 +73,49 @@ export function SwapInterface() {
     tokenBAddress,
   })
 
+  // Add custom token to localStorage if provided
+  useEffect(() => {
+    if (customToken && !customTokenAdded) {
+      // Add custom token to localStorage
+      try {
+        const CUSTOM_TOKENS_STORAGE_KEY = "kiwiswap_custom_tokens"
+        const savedTokens = localStorage.getItem(CUSTOM_TOKENS_STORAGE_KEY)
+        let customTokens = []
+
+        if (savedTokens) {
+          customTokens = JSON.parse(savedTokens)
+
+          // Check if token already exists
+          const exists = customTokens.some(
+            (token: CustomTokenInfo) => token.address.toLowerCase() === customToken.address.toLowerCase(),
+          )
+
+          if (!exists) {
+            customTokens.push({
+              ...customToken,
+              logo: customToken.logo || "/placeholder.svg?height=32&width=32",
+              isCustom: true,
+            })
+            localStorage.setItem(CUSTOM_TOKENS_STORAGE_KEY, JSON.stringify(customTokens))
+          }
+        } else {
+          customTokens = [
+            {
+              ...customToken,
+              logo: customToken.logo || "/placeholder.svg?height=32&width=32",
+              isCustom: true,
+            },
+          ]
+          localStorage.setItem(CUSTOM_TOKENS_STORAGE_KEY, JSON.stringify(customTokens))
+        }
+
+        setCustomTokenAdded(true)
+      } catch (error) {
+        console.error("Error adding custom token to localStorage:", error)
+      }
+    }
+  }, [customToken, customTokenAdded])
+
   const handleTokenASelect = (token: string, address: string) => {
     setTokenA(token)
     setTokenAAddress(address)
@@ -64,8 +130,8 @@ export function SwapInterface() {
   const handleTabChange = (value: string) => {
     setActiveTab(value)
 
-    // اگر به تب نقدینگی رفتیم، حالت گسترده را فعال کنیم
-    if (value === "liquidity") {
+    // اگر به تب نقدینگی یا تاریخچه رفتیم، حالت گسترده را فعال کنیم
+    if (value === "liquidity" || value === "history") {
       setTimeout(() => {
         setIsExpanded(true)
         setTimeout(() => {
@@ -100,7 +166,9 @@ export function SwapInterface() {
     <div
       className={cn(
         "w-full transition-all duration-500 ease-in-out",
-        activeTab === "liquidity" && isExpanded ? "md:max-w-4xl mx-auto" : "max-w-md mx-auto",
+        (activeTab === "liquidity" || activeTab === "history") && isExpanded
+          ? "md:max-w-4xl mx-auto"
+          : "max-w-md mx-auto",
       )}
     >
       <Card className="border-2 border-primary/20">
@@ -178,9 +246,12 @@ export function SwapInterface() {
                   tokenAAddress={tokenAAddress}
                   tokenBAddress={tokenBAddress}
                   poolExists={poolExists}
+                  exchangeRate={exchangeRate}
                   getSwapEvents={getSwapEvents}
                   disabled={!connected || !isCorrectNetwork}
                   account={account}
+                  isExpanded={isExpanded}
+                  showPoolInfo={showPoolInfo}
                 />
               </TabsContent>
             </Tabs>
