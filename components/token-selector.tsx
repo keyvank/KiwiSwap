@@ -309,7 +309,6 @@ export function TokenSelector({ defaultToken = "ETH", onSelect, customToken, dis
                     />
                     <span>{token.symbol}</span>
                     <span className="text-muted-foreground text-xs mr-2">{token.name}</span>
-                    {token.isCustom && <span className="text-xs text-primary ml-auto">سفارشی</span>}
                     {isDisabled && <XCircle className="h-4 w-4 text-muted-foreground ml-auto" />}
                   </div>
                 )

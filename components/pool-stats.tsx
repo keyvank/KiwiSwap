@@ -86,7 +86,7 @@ export function PoolStats({ exists, tokenA, tokenB, reservoirA, reservoirB, lpTo
   return (
     <Card className="border-primary/20">
       <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between my-4">
           <h3 className="text-lg font-medium">اطلاعات استخر</h3>
           <div className="flex items-center gap-1 text-primary">
             <Droplets className="h-5 w-5" />

@@ -70,7 +70,7 @@ export function MarketplaceContent() {
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">توکن‌های اخیراً اضافه شده</h2>
+        <h2 className="text-xl font-semibold">آخرین استخرهای ایجاد شده</h2>
         <Button variant="outline" size="sm" onClick={fetchPools} disabled={isLoading} className="flex items-center">
           {isLoading ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <RefreshCw className="h-4 w-4 ml-2" />}
           بروزرسانی
@@ -79,7 +79,7 @@ export function MarketplaceContent() {
 
       {isLoading ? (
         <Card className="w-full">
-          <CardContent className="flex justify-center items-center py-12">
+          <CardContent className="flex justify-center items-center py-12 mt-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <span className="mr-2">در حال بارگذاری استخرها...</span>
           </CardContent>
@@ -97,7 +97,7 @@ export function MarketplaceContent() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {pools.map((pool) => (
             <Card key={pool.id} className={`${pool.isNew ? "border-primary/30 bg-primary/5" : ""} h-full`}>
               <CardHeader className="p-4 pb-2">
@@ -173,7 +173,7 @@ export function MarketplaceContent() {
                       const priorityB = TOKEN_PRIORITY[pool.tokenB.symbol] ?? -1
 
                       // Return the token with lower priority
-                      return priorityA < priorityB ? `/${pool.tokenA.address}` : `/${pool.tokenB.address}`
+                      return priorityA < priorityB ? `/swap/${pool.tokenA.address}` : `/swap/${pool.tokenB.address}`
                     })()}
                   >
                     <Button
