@@ -1,6 +1,6 @@
 .PHONY: build run push
 
-IMAGE_NAME=h-reg.nxbo.ir/labs/KiwiSwap
+IMAGE_NAME=h-reg.nxbo.ir/labs/kiwi-swap
 IMAGE_TAG=$(shell git rev-parse --short HEAD)
 
 build:
