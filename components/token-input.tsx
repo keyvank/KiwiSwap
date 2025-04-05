@@ -18,6 +18,7 @@ interface TokenInputProps {
   extraInfo?: React.ReactNode
   isCalculating?: boolean
   readOnly?: boolean
+  disabledToken?: string // Add this prop
 }
 
 export function TokenInput({
@@ -31,6 +32,7 @@ export function TokenInput({
   extraInfo,
   isCalculating = false,
   readOnly = false,
+  disabledToken, // Add this prop
 }: TokenInputProps) {
   // فرمت کردن عدد با 6 رقم اعشار
   const formatNumber = (num: string) => {
@@ -60,7 +62,11 @@ export function TokenInput({
           readOnly={readOnly}
           className={`flex-1 rounded-r-none border-r-0 font-mono ${readOnly ? "bg-muted cursor-not-allowed" : ""}`}
         />
-        <TokenSelector defaultToken={token} onSelect={onTokenSelect} />
+        <TokenSelector
+          defaultToken={token}
+          onSelect={onTokenSelect}
+          disabledToken={disabledToken} // Pass the disabled token
+        />
 
         {/* نشانگر بارگذاری */}
         {isCalculating && (

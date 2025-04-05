@@ -140,6 +140,7 @@ export function useWallet() {
     }
   }
 
+  // Make sure the return statement includes isConnecting
   return {
     connected,
     account,

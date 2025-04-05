@@ -1,16 +1,8 @@
 "use client"
 
-import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
-import { ChevronDown, Plus, Check, AlertCircle } from "lucide-react"
+import { ChevronDown, Plus, Check, AlertCircle, XCircle } from "lucide-react"
 import Image from "next/image"
 import { TOKEN_ADDRESSES } from "@/lib/contract-utils"
 import {
@@ -25,11 +17,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { isValidERC20, getERC20Info } from "@/lib/contract-utils"
 import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
+
+// First, import the identicon utility
+import { generateIdenticon } from "@/lib/identicon-utils"
 
 interface TokenSelectorProps {
   defaultToken?: string
   onSelect?: (token: string, address: string) => void
   customToken?: TokenInfo
+  disabledToken?: string
 }
 
 interface TokenInfo {
@@ -43,27 +40,14 @@ interface TokenInfo {
 // کلید ذخیره‌سازی توکن‌های سفارشی در localStorage
 const CUSTOM_TOKENS_STORAGE_KEY = "kiwiswap_custom_tokens"
 
-export function TokenSelector({ defaultToken = "ETH", onSelect, customToken }: TokenSelectorProps) {
+export function TokenSelector({ defaultToken = "ETH", onSelect, customToken, disabledToken }: TokenSelectorProps) {
   const [selectedToken, setSelectedToken] = useState(defaultToken)
+  const [isOpen, setIsOpen] = useState(false)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Update the initial tokens state to only include IRT and USDT
   const [tokens, setTokens] = useState<TokenInfo[]>([
-    {
-      symbol: "SOL",
-      name: "سولانا",
-      logo: "https://cryptologos.cc/logos/solana-sol-logo.svg",
-      address: TOKEN_ADDRESSES.SOL,
-    },
-    {
-      symbol: "ETH",
-      name: "اتریوم",
-      logo: "https://cryptologos.cc/logos/ethereum-eth-logo.svg",
-      address: TOKEN_ADDRESSES.ETH,
-    },
-    {
-      symbol: "USDT",
-      name: "تتر",
-      logo: "https://cryptologos.cc/logos/tether-usdt-logo.svg",
-      address: TOKEN_ADDRESSES.USDT,
-    },
     {
       symbol: "IRT",
       name: "تومان",
@@ -71,16 +55,10 @@ export function TokenSelector({ defaultToken = "ETH", onSelect, customToken }: T
       address: TOKEN_ADDRESSES.IRT,
     },
     {
-      symbol: "DOGE",
-      name: "دوج کوین",
-      logo: "https://cryptologos.cc/logos/dogecoin-doge-logo.svg",
-      address: TOKEN_ADDRESSES.DOGE,
-    },
-    {
-      symbol: "BTC",
-      name: "بیت کوین",
-      logo: "https://cryptologos.cc/logos/bitcoin-btc-logo.svg",
-      address: TOKEN_ADDRESSES.BTC,
+      symbol: "USDT",
+      name: "تتر",
+      logo: "https://cryptologos.cc/logos/tether-usdt-logo.svg",
+      address: TOKEN_ADDRESSES.USDT,
     },
   ])
 
@@ -144,10 +122,14 @@ export function TokenSelector({ defaultToken = "ETH", onSelect, customToken }: T
   }
 
   const handleSelect = (token: string, address: string) => {
+    // Don't allow selecting the disabled token
+    if (token === disabledToken) return
+
     setSelectedToken(token)
     if (onSelect) {
       onSelect(token, address)
     }
+    setIsOpen(false)
   }
 
   const getTokenInfo = (symbol: string) => {
@@ -191,7 +173,8 @@ export function TokenSelector({ defaultToken = "ETH", onSelect, customToken }: T
       setCustomTokenInfo({
         symbol: tokenInfo.symbol,
         name: tokenInfo.name,
-        logo: "/placeholder.svg?height=32&width=32", // لوگوی پیش‌فرض
+        // Update the customTokenInfo object creation to use an identicon instead of placeholder
+        logo: generateIdenticon(customTokenAddress),
         address: customTokenAddress,
         isCustom: true,
       })
@@ -233,57 +216,122 @@ export function TokenSelector({ defaultToken = "ETH", onSelect, customToken }: T
     })
   }
 
+  // Custom toggle handler
+  const handleToggle = () => {
+    setIsOpen(!isOpen)
+  }
+
+  // Handle opening the add token dialog
+  const handleOpenAddTokenDialog = () => {
+    setIsOpen(false)
+    // Use setTimeout to ensure the dropdown is closed before opening the dialog
+    setTimeout(() => {
+      setIsAddTokenDialogOpen(true)
+    }, 100)
+  }
+
+  // Add this useEffect to handle clicks outside the dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        isOpen
+      ) {
+        setIsOpen(false)
+      }
+    }
+
+    // Add event listener when dropdown is open
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+
+    // Clean up the event listener
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [isOpen])
+
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger className="rounded-l-none" asChild>
-          <Button variant="outline" className="min-w-24 flex items-center gap-2">
+      <div className="relative">
+        {/* Update the button styling to ensure perfect vertical alignment */}
+        <Button
+          ref={buttonRef}
+          variant="outline"
+          className="min-w-24 flex items-center justify-center gap-2 rounded-l-none h-10 py-0"
+          onClick={handleToggle}
+          type="button"
+        >
+          <div className="flex items-center gap-2">
             <Image
-              src={selectedTokenInfo.logo || "/placeholder.svg"}
+              src={selectedTokenInfo.logo || generateIdenticon(selectedTokenInfo.address)}
               alt={selectedToken}
               width={20}
               height={20}
               className="rounded-full"
             />
-            {selectedToken}
+            <span className="flex items-center">{selectedToken}</span>
             <ChevronDown className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="rounded-l-none" align="end">
-          {tokens.map((token) => (
-            <DropdownMenuItem
-              key={token.symbol}
-              onClick={() => handleSelect(token.symbol, token.address)}
-              className="cursor-pointer flex items-center gap-2"
-            >
-              <Image
-                src={token.logo || "/placeholder.svg"}
-                alt={token.symbol}
-                width={20}
-                height={20}
-                className="rounded-full"
-              />
-              <span>{token.symbol}</span>
-              <span className="text-muted-foreground text-xs mr-2">{token.name}</span>
-              {token.isCustom && <span className="text-xs text-primary ml-auto">سفارشی</span>}
-            </DropdownMenuItem>
-          ))}
+          </div>
+        </Button>
 
-          <DropdownMenuSeparator />
-
-          <DropdownMenuItem
-            onClick={() => setIsAddTokenDialogOpen(true)}
-            className="cursor-pointer flex items-center gap-2 text-primary"
+        {isOpen && (
+          <div
+            ref={dropdownRef}
+            className="absolute right-0 mt-1 w-56 rounded-md shadow-lg bg-popover border border-border z-50"
+            style={{ minWidth: "200px" }}
           >
-            <Plus className="h-4 w-4" />
-            <span>افزودن توکن سفارشی</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            <div className="py-1 rounded-md bg-popover text-popover-foreground">
+              {tokens.map((token) => {
+                const isDisabled = token.symbol === disabledToken
+                return (
+                  <div
+                    key={token.symbol}
+                    onClick={() => !isDisabled && handleSelect(token.symbol, token.address)}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 text-sm",
+                      isDisabled
+                        ? "opacity-50 cursor-not-allowed"
+                        : "cursor-pointer hover:bg-accent hover:text-accent-foreground",
+                    )}
+                  >
+                    {/* Update the Image component in the dropdown items to use identicons */}
+                    <Image
+                      src={token.logo || generateIdenticon(token.address)}
+                      alt={token.symbol}
+                      width={20}
+                      height={20}
+                      className="rounded-full"
+                    />
+                    <span>{token.symbol}</span>
+                    <span className="text-muted-foreground text-xs mr-2">{token.name}</span>
+                    {token.isCustom && <span className="text-xs text-primary ml-auto">سفارشی</span>}
+                    {isDisabled && <XCircle className="h-4 w-4 text-muted-foreground ml-auto" />}
+                  </div>
+                )
+              })}
+
+              <div className="border-t border-border my-1"></div>
+
+              <div
+                onClick={handleOpenAddTokenDialog}
+                className="flex items-center gap-2 px-4 py-2 text-sm text-primary cursor-pointer hover:bg-accent"
+              >
+                <Plus className="h-4 w-4" />
+                <span>افزودن توکن سفارشی</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* دیالوگ افزودن توکن سفارشی */}
       <Dialog open={isAddTokenDialogOpen} onOpenChange={setIsAddTokenDialogOpen}>
-        <DialogContent className="sm:max-w-md" dir="rtl">
+        <DialogContent className="sm:max-w-md z-[100]" dir="rtl">
           <DialogHeader>
             <DialogTitle>افزودن توکن سفارشی</DialogTitle>
             <DialogDescription>آدرس قرارداد توکن ERC20 را وارد کنید تا به لیست توکن‌ها اضافه شود.</DialogDescription>

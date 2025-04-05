@@ -261,6 +261,7 @@ export function SwapForm({
         onTokenSelect={onTokenASelect}
         isCalculating={direction === "BtoA" && isCalculating}
         readOnly={direction === "BtoA"} // Read-only when it's the output field
+        disabledToken={tokenB} // Pass the other token as disabled
         extraInfo={
           direction === "BtoA" &&
           tokenBAmount &&
@@ -292,6 +293,7 @@ export function SwapForm({
         onTokenSelect={onTokenBSelect}
         isCalculating={direction === "AtoB" && isCalculating}
         readOnly={direction === "AtoB"} // Read-only when it's the output field
+        disabledToken={tokenA} // Pass the other token as disabled
         extraInfo={
           direction === "AtoB" &&
           tokenAAmount &&

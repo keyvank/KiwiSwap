@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Loader2 } from "lucide-react"
-import { ConnectWallet } from "@/components/connect-wallet"
+import { Loader2, Wallet } from "lucide-react"
 import { NetworkWarning } from "@/components/network-warning"
 import { SwapForm } from "@/components/swap-form"
 import { LiquidityForm } from "@/components/liquidity-form"
@@ -13,6 +12,7 @@ import { useWallet } from "@/hooks/use-wallet"
 import { usePool } from "@/hooks/use-pool"
 import { TOKEN_ADDRESSES } from "@/lib/contract-utils"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 
 interface CustomTokenInfo {
   symbol: string
@@ -46,7 +46,7 @@ export function SwapInterface({
   const [showPoolInfo, setShowPoolInfo] = useState(false)
   const [customTokenAdded, setCustomTokenAdded] = useState(false)
 
-  const { connected, account, isCorrectNetwork, connect, disconnect, switchNetwork } = useWallet()
+  const { connected, account, isCorrectNetwork, switchNetwork, connect, isConnecting } = useWallet()
 
   const {
     poolExists,
@@ -162,6 +162,9 @@ export function SwapInterface({
     }
   }
 
+  // Check if we need to show the wallet connection overlay
+  const showWalletOverlay = !connected && (activeTab === "liquidity" || activeTab === "history")
+
   return (
     <div
       className={cn(
@@ -175,12 +178,11 @@ export function SwapInterface({
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle className="text-xl">کیوی‌سواپ</CardTitle>
-            <ConnectWallet connected={connected} account={account} onConnect={connect} onDisconnect={disconnect} />
           </div>
           <CardDescription>مبادله بر بستر زنجیر</CardDescription>
           {connected && !isCorrectNetwork && <NetworkWarning onSwitchNetwork={switchNetwork} />}
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative">
           {isLoading ? (
             <div className="flex justify-center items-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -194,66 +196,93 @@ export function SwapInterface({
                 <TabsTrigger value="history">تاریخچه</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="swap">
-                <SwapForm
-                  tokenA={tokenA}
-                  tokenB={tokenB}
-                  tokenAAddress={tokenAAddress}
-                  tokenBAddress={tokenBAddress}
-                  balanceA={balanceA}
-                  balanceB={balanceB}
-                  poolExists={poolExists}
-                  exchangeRate={exchangeRate}
-                  onTokenASelect={handleTokenASelect}
-                  onTokenBSelect={handleTokenBSelect}
-                  onSwap={swap}
-                  calculateOutput={calculateOutput}
-                  disabled={!connected || !isCorrectNetwork}
-                  account={account}
-                />
-              </TabsContent>
+              <div className="relative">
+                {/* Wallet Connection Overlay */}
+                {showWalletOverlay && (
+                  <div className="absolute inset-0 z-10 backdrop-blur-sm bg-background/70 rounded-lg flex flex-col items-center justify-center p-6 text-center">
+                    <Wallet className="h-12 w-12 mb-4 text-primary" />
+                    <h3 className="text-lg font-medium mb-2">اتصال کیف پول</h3>
+                    <p className="text-muted-foreground mb-4">
+                      برای مشاهده {activeTab === "liquidity" ? "نقدینگی" : "تاریخچه مبادلات"} لطفا ابتدا کیف پول خود را
+                      متصل کنید.
+                    </p>
+                    <Button onClick={connect} disabled={isConnecting} className="flex items-center gap-1">
+                      {isConnecting ? (
+                        <>
+                          <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                          در حال اتصال...
+                        </>
+                      ) : (
+                        <>
+                          <Wallet className="h-4 w-4 ml-1" />
+                          اتصال کیف پول
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
 
-              <TabsContent value="liquidity">
-                <LiquidityForm
-                  tokenA={tokenA}
-                  tokenB={tokenB}
-                  tokenAAddress={tokenAAddress}
-                  tokenBAddress={tokenBAddress}
-                  balanceA={balanceA}
-                  balanceB={balanceB}
-                  poolExists={poolExists}
-                  reservoirA={reservoirA}
-                  reservoirB={reservoirB}
-                  lpTokens={lpTokens}
-                  totalLpSupply={totalLpSupply}
-                  onTokenASelect={handleTokenASelect}
-                  onTokenBSelect={handleTokenBSelect}
-                  onAddLiquidity={addLiquidity}
-                  onRemoveLiquidity={removeLiquidity}
-                  onGetRemovalPreview={getRemoveLiquidityPreview}
-                  estimateLPTokens={estimateLPTokens}
-                  disabled={!connected || !isCorrectNetwork}
-                  isExpanded={isExpanded}
-                  showPoolInfo={showPoolInfo}
-                  onToggleExpand={toggleExpand}
-                />
-              </TabsContent>
+                <TabsContent value="swap">
+                  <SwapForm
+                    tokenA={tokenA}
+                    tokenB={tokenB}
+                    tokenAAddress={tokenAAddress}
+                    tokenBAddress={tokenBAddress}
+                    balanceA={balanceA}
+                    balanceB={balanceB}
+                    poolExists={poolExists}
+                    exchangeRate={exchangeRate}
+                    onTokenASelect={handleTokenASelect}
+                    onTokenBSelect={handleTokenBSelect}
+                    onSwap={swap}
+                    calculateOutput={calculateOutput}
+                    disabled={!connected || !isCorrectNetwork}
+                    account={account}
+                  />
+                </TabsContent>
 
-              <TabsContent value="history">
-                <SwapHistory
-                  tokenA={tokenA}
-                  tokenB={tokenB}
-                  tokenAAddress={tokenAAddress}
-                  tokenBAddress={tokenBAddress}
-                  poolExists={poolExists}
-                  exchangeRate={exchangeRate}
-                  getSwapEvents={getSwapEvents}
-                  disabled={!connected || !isCorrectNetwork}
-                  account={account}
-                  isExpanded={isExpanded}
-                  showPoolInfo={showPoolInfo}
-                />
-              </TabsContent>
+                <TabsContent value="liquidity">
+                  <LiquidityForm
+                    tokenA={tokenA}
+                    tokenB={tokenB}
+                    tokenAAddress={tokenAAddress}
+                    tokenBAddress={tokenBAddress}
+                    balanceA={balanceA}
+                    balanceB={balanceB}
+                    poolExists={poolExists}
+                    reservoirA={reservoirA}
+                    reservoirB={reservoirB}
+                    lpTokens={lpTokens}
+                    totalLpSupply={totalLpSupply}
+                    onTokenASelect={handleTokenASelect}
+                    onTokenBSelect={handleTokenBSelect}
+                    onAddLiquidity={addLiquidity}
+                    onRemoveLiquidity={removeLiquidity}
+                    onGetRemovalPreview={getRemoveLiquidityPreview}
+                    estimateLPTokens={estimateLPTokens}
+                    disabled={!connected || !isCorrectNetwork}
+                    isExpanded={isExpanded}
+                    showPoolInfo={showPoolInfo}
+                    onToggleExpand={toggleExpand}
+                  />
+                </TabsContent>
+
+                <TabsContent value="history">
+                  <SwapHistory
+                    tokenA={tokenA}
+                    tokenB={tokenB}
+                    tokenAAddress={tokenAAddress}
+                    tokenBAddress={tokenBAddress}
+                    poolExists={poolExists}
+                    exchangeRate={exchangeRate}
+                    getSwapEvents={getSwapEvents}
+                    disabled={!connected || !isCorrectNetwork}
+                    account={account}
+                    isExpanded={isExpanded}
+                    showPoolInfo={showPoolInfo}
+                  />
+                </TabsContent>
+              </div>
             </Tabs>
           )}
         </CardContent>

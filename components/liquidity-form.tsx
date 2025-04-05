@@ -263,6 +263,7 @@ export function LiquidityForm({
             balance={balanceA}
             onChange={handleLiquidityTokenAChange}
             onTokenSelect={onTokenASelect}
+            disabledToken={tokenB}
           />
 
           <TokenInput
@@ -273,6 +274,7 @@ export function LiquidityForm({
             balance={balanceB}
             onChange={handleLiquidityTokenBChange}
             onTokenSelect={onTokenBSelect}
+            disabledToken={tokenA}
           />
 
           {poolExists && (

@@ -3,6 +3,10 @@ import type { Metadata } from "next"
 import { Vazirmatn } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+// Import the Header component
+import { Header } from "@/components/header"
+// Import the Footer component
+import { Footer } from "@/components/footer"
 
 const vazirmatn = Vazirmatn({
   subsets: ["arabic"],
@@ -22,9 +26,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fa" dir="rtl" suppressHydrationWarning>
-      <body className={`${vazirmatn.variable} font-vazirmatn bg-background`}>
+      {/* Update the body section to include the Header component */}
+      <body className={`${vazirmatn.variable} font-vazirmatn bg-background min-h-screen flex flex-col`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
-          {children}
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
         </ThemeProvider>
       </body>
     </html>
