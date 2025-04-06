@@ -4,7 +4,7 @@ import Link from "next/link"
 import { ConnectWallet } from "@/components/connect-wallet"
 import { useWallet } from "@/hooks/use-wallet"
 import { NetworkWarning } from "@/components/network-warning"
-import { Home, Store, Info } from "lucide-react"
+import { Store, Info, Sparkles, ArrowLeftRight } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 export function Header() {
@@ -19,8 +19,8 @@ export function Header() {
           </Link>
           <nav className="flex items-center gap-4 md:gap-6">
             <Link href="/" className="flex items-center text-sm font-medium transition-colors hover:text-primary">
-              <Home className="ml-1 h-4 w-4" />
-              خانه
+              <ArrowLeftRight className="ml-1 h-4 w-4" />
+              مبادله
             </Link>
             <Link
               href="/marketplace"
@@ -28,6 +28,13 @@ export function Header() {
             >
               <Store className="ml-1 h-4 w-4" />
               بازارچه
+            </Link>
+            <Link
+              href="/create-token"
+              className="flex items-center text-sm font-medium transition-colors hover:text-primary"
+            >
+              <Sparkles className="ml-1 h-4 w-4" />
+              توکنت رو بساز!
             </Link>
             <Link href="/about" className="flex items-center text-sm font-medium transition-colors hover:text-primary">
               <Info className="ml-1 h-4 w-4" />

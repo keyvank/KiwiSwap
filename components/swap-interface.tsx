@@ -75,8 +75,7 @@ export function SwapInterface({
 
   // Add custom token to localStorage if provided
   useEffect(() => {
-    const DEFAULT_TOKENS = [TOKEN_ADDRESSES.IRT, TOKEN_ADDRESSES.USDT];
-    if (customToken && !customTokenAdded && !DEFAULT_TOKENS.includes(customToken.address)) {
+    if (customToken && !customTokenAdded) {
       // Add custom token to localStorage
       try {
         const CUSTOM_TOKENS_STORAGE_KEY = "kiwiswap_custom_tokens"

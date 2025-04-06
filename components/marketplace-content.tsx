@@ -3,17 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import {
-  Loader2,
-  RefreshCw,
-  ExternalLink,
-  ArrowRight,
-  Clock,
-  Sparkles,
-  DollarSign,
-  TrendingUp,
-  TrendingDown,
-} from "lucide-react"
+import { Loader2, RefreshCw, ExternalLink, ArrowRight, Clock, DollarSign, TrendingUp, TrendingDown } from "lucide-react"
 import { getRecentlyCreatedPools, type PoolInfo, formatNumberWithSuffix } from "@/lib/marketplace-utils"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
@@ -70,7 +60,7 @@ export function MarketplaceContent() {
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">آخرین استخرهای ایجاد شده</h2>
+        <h2 className="text-xl font-semibold">توکن‌های اخیراً اضافه شده</h2>
         <Button variant="outline" size="sm" onClick={fetchPools} disabled={isLoading} className="flex items-center">
           {isLoading ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <RefreshCw className="h-4 w-4 ml-2" />}
           بروزرسانی
@@ -97,19 +87,13 @@ export function MarketplaceContent() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {pools.map((pool) => (
             <Card key={pool.id} className={`${pool.isNew ? "border-primary/30 bg-primary/5" : ""} h-full`}>
               <CardHeader className="p-4 pb-2">
                 <div className="flex justify-between items-center">
                   <CardTitle className="text-base flex items-center">
                     {pool.tokenA.symbol} / {pool.tokenB.symbol}
-                    {pool.isNew && (
-                      <Badge variant="default" className="ml-2 bg-primary/20 text-primary text-[10px] px-1.5 py-0">
-                        <Sparkles className="h-2.5 w-2.5 ml-0.5" />
-                        جدید
-                      </Badge>
-                    )}
                   </CardTitle>
 
                   {/* Price Change Badge */}

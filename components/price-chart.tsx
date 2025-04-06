@@ -356,7 +356,7 @@ export function PriceChart({
     return (
       <Card className="bg-secondary/50 border-dashed border-muted h-full">
         <CardContent className="p-6 text-center flex flex-col items-center justify-center h-full">
-          <div className="flex justify-center m-4">
+          <div className="flex justify-center mb-4">
             <TrendingUp className="h-12 w-12 text-muted-foreground opacity-50" />
           </div>
           <h3 className="text-lg font-medium mb-2">نمودار قیمت</h3>
@@ -385,7 +385,7 @@ export function PriceChart({
   return (
     <Card className="border-primary/20 h-full">
       <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4 p-6">
+        <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-medium">نمودار قیمت</h3>
           <div className="flex items-center gap-2">
             <span dir="ltr" className="font-mono text-sm">
@@ -396,7 +396,7 @@ export function PriceChart({
                 isPriceUp ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500"
               }`}
             >
-              <span className="ml-1">{isPriceUp ? "+" : ""}</span>
+              {isPriceUp ? "+" : ""}
               {priceChangePercentage.toFixed(2)}%
             </span>
           </div>

@@ -17,7 +17,9 @@ export const ZANJIR_NETWORK = {
 export const POOL_MANAGER_ABI = [
   "function getPool(address _tokenA, address _tokenB) public view returns (address)",
   "function createPoolIfNotExists(address _tokenA, address _tokenB) external returns (address)",
+  "function createTokenAndPool(address quoteToken, string memory name, string memory symbol, uint256 totalSupply, uint256 baseAmount, uint256 quoteAmount) external returns (address)",
   "event PoolCreated(address tokenA, address tokenB, address pool)",
+  "event TokenCreated(address token)",
 ]
 
 // ABI برای قرارداد BasicPool
@@ -54,7 +56,7 @@ export const ERC20_ABI = [
 ]
 
 // آدرس قرارداد مدیریت استخر
-export const POOL_MANAGER_ADDRESS = "0x83EE15DFDDD8b8AD56A73001Ca7A1627c7fe6716"
+export const POOL_MANAGER_ADDRESS = "0x10fB2Ab116E2Eb3a8B5a1Ca912E05f63c3D969E4"
 
 // آدرس‌های توکن‌های مشخص شده
 export const TOKEN_ADDRESSES = {
