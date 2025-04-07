@@ -60,6 +60,12 @@ export function TokenSelector({ defaultToken = "ETH", onSelect, customToken, dis
       logo: "https://cryptologos.cc/logos/tether-usdt-logo.svg",
       address: TOKEN_ADDRESSES.USDT,
     },
+    {
+      symbol: "ETH",
+      name: "اتریوم",
+      logo: "https://cryptologos.cc/logos/ethereum-eth-logo.svg",
+      address: TOKEN_ADDRESSES.ETH,
+    },
   ])
 
   // دیالوگ افزودن توکن سفارشی
