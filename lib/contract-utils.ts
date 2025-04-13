@@ -56,7 +56,7 @@ export const ERC20_ABI = [
 ]
 
 // آدرس قرارداد مدیریت استخر
-export const POOL_MANAGER_ADDRESS = "0x10fB2Ab116E2Eb3a8B5a1Ca912E05f63c3D969E4"
+export const POOL_MANAGER_ADDRESS = "0xe00b745b5e71337507d43a8584320c4192CA7994"
 
 // آدرس‌های توکن‌های مشخص شده
 export const TOKEN_ADDRESSES = {
