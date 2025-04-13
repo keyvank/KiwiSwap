@@ -57,13 +57,13 @@ export function TokenSelector({ defaultToken = "ETH", onSelect, customToken, dis
     {
       symbol: "USDT",
       name: "تتر",
-      logo: "https://cryptologos.cc/logos/tether-usdt-logo.svg",
+      logo: "https://zanjir.xyz/usdt.svg",
       address: TOKEN_ADDRESSES.USDT,
     },
     {
       symbol: "ETH",
       name: "اتریوم",
-      logo: "https://cryptologos.cc/logos/ethereum-eth-logo.svg",
+      logo: "https://zanjir.xyz/eth.svg",
       address: TOKEN_ADDRESSES.ETH,
     },
   ])
