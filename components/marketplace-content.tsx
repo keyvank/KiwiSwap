@@ -82,7 +82,7 @@ export function MarketplaceContent() {
         </Card>
       ) : pools.length === 0 ? (
         <Card className="w-full">
-          <CardContent className="p-6 text-center">
+          <CardContent className="p-6 text-center mt-6">
             <p className="text-muted-foreground">هیچ استخری یافت نشد.</p>
           </CardContent>
         </Card>
@@ -120,15 +120,15 @@ export function MarketplaceContent() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-4 pt-0 space-y-3">
-                {/* IRT Liquidity Information */}
+                {/* USDT Liquidity Information */}
                 <div className="bg-secondary/30 rounded-lg p-2 flex items-center justify-between">
                   <div className="flex items-center text-xs">
                     <DollarSign className="h-3 w-3 ml-1 text-primary" />
-                    <span>نقدینگی IRT:</span>
+                    <span>نقدینگی USDT:</span>
                   </div>
                   <div className="text-xs font-medium" dir="ltr">
-                    {pool.hasIrt ? (
-                      `${formatNumberWithSuffix(pool.irtLiquidity || "0")} IRT`
+                    {pool.hasUsdt ? (
+                      `${formatNumberWithSuffix(pool.usdtLiquidity || "0")} USDT`
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}

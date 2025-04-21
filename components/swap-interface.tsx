@@ -31,10 +31,10 @@ interface SwapInterfaceProps {
 }
 
 export function SwapInterface({
-  defaultTokenA = "IRT",
-  defaultTokenAAddress = TOKEN_ADDRESSES.IRT,
-  defaultTokenB = "USDT",
-  defaultTokenBAddress = TOKEN_ADDRESSES.USDT,
+  defaultTokenA = "USDT",
+  defaultTokenAAddress = TOKEN_ADDRESSES.USDT,
+  defaultTokenB = "AMOU",
+  defaultTokenBAddress = TOKEN_ADDRESSES.AMOU,
   customToken,
 }: SwapInterfaceProps) {
   const [activeTab, setActiveTab] = useState("swap")

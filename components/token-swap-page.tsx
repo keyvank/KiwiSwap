@@ -85,7 +85,7 @@ export function TokenSwapPage({ tokenAddress }: TokenSwapPageProps) {
       {tokenInfo && (
         <div className="text-center mb-4">
           <p className="text-lg">
-            مبادله <span className="font-bold">تومان (IRT)</span> به{" "}
+            مبادله <span className="font-bold">تتر (USDT)</span> به{" "}
             <span className="font-bold">
               {tokenInfo.name} ({tokenInfo.symbol})
             </span>
@@ -93,8 +93,8 @@ export function TokenSwapPage({ tokenAddress }: TokenSwapPageProps) {
         </div>
       )}
       <SwapInterface
-        defaultTokenA="IRT"
-        defaultTokenAAddress={TOKEN_ADDRESSES.IRT}
+        defaultTokenA="USDT"
+        defaultTokenAAddress={TOKEN_ADDRESSES.USDT}
         defaultTokenB={tokenInfo?.symbol || ""}
         defaultTokenBAddress={tokenAddress}
         customToken={

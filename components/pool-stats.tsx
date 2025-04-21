@@ -69,7 +69,7 @@ export function PoolStats({ exists, tokenA, tokenB, reservoirA, reservoirB, lpTo
     return (
       <Card className="bg-secondary/50 border-dashed border-muted">
         <CardContent className="p-6 text-center">
-          <div className="flex justify-center mb-4">
+          <div className="flex justify-center mb-4 mt-4">
             <Droplets className="h-12 w-12 text-muted-foreground opacity-50" />
           </div>
           <h3 className="text-lg font-medium mb-2">استخری وجود ندارد</h3>

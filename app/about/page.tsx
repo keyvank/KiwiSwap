@@ -2,6 +2,7 @@ import { AnimatedBackground } from "@/components/animated-background"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Briefcase, Code, Coins, ExternalLink, Globe, Shield, Users } from "lucide-react"
+import Link from "next/link"
 
 export default function AboutPage() {
   return (
@@ -115,10 +116,12 @@ export default function AboutPage() {
                   </div>
 
                   <div className="pt-2">
-                    <Button className="w-full">
-                      ارسال رزومه
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                    </Button>
+                    <Link href="mailto:dev@zanjir.xyz" target="_blank">
+                      <Button className="w-full">
+                        ارسال رزومه
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                      </Button>
+                    </Link>
                   </div>
                 </CardContent>
               </Card>

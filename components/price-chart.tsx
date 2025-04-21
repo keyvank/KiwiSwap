@@ -356,7 +356,7 @@ export function PriceChart({
     return (
       <Card className="bg-secondary/50 border-dashed border-muted h-full">
         <CardContent className="p-6 text-center flex flex-col items-center justify-center h-full">
-          <div className="flex justify-center mb-4">
+          <div className="flex justify-center mb-4 mt-4">
             <TrendingUp className="h-12 w-12 text-muted-foreground opacity-50" />
           </div>
           <h3 className="text-lg font-medium mb-2">نمودار قیمت</h3>

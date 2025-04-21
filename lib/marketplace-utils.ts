@@ -29,8 +29,8 @@ export interface PoolInfo {
   reserveB?: string
   totalValueLocked?: string
   quoteToken?: string
-  irtLiquidity?: string
-  hasIrt?: boolean
+  usdtLiquidity?: string
+  hasUsdt?: boolean
   priceChange?: {
     percentage: number
     isPositive: boolean
@@ -86,9 +86,9 @@ export async function getRecentlyCreatedPools(): Promise<PoolInfo[]> {
           let reserveA = "0"
           let reserveB = "0"
           let totalValueLocked = "0"
-          let quoteToken = "IRT" // Default quote token
-          let irtLiquidity = "0"
-          let hasIrt = false
+          let quoteToken = "USDT" // Default quote token
+          let usdtLiquidity = "0"
+          let hasUsdt = false
           let priceChange = null
 
           try {
@@ -99,13 +99,13 @@ export async function getRecentlyCreatedPools(): Promise<PoolInfo[]> {
             reserveA = ethers.formatEther(await poolContract.reserveA())
             reserveB = ethers.formatEther(await poolContract.reserveB())
 
-            // Check if either token is IRT
-            if (tokenASymbol === "IRT") {
-              irtLiquidity = reserveA
-              hasIrt = true
-            } else if (tokenBSymbol === "IRT") {
-              irtLiquidity = reserveB
-              hasIrt = true
+            // Check if either token is USDT
+            if (tokenASymbol === "USDT") {
+              usdtLiquidity = reserveA
+              hasUsdt = true
+            } else if (tokenBSymbol === "USDT") {
+              usdtLiquidity = reserveB
+              hasUsdt = true
             }
 
             // Determine quote token based on priority
@@ -115,7 +115,7 @@ export async function getRecentlyCreatedPools(): Promise<PoolInfo[]> {
             // Calculate TVL based on the quote token (higher priority token)
             if (priorityA >= priorityB) {
               quoteToken = tokenASymbol
-              // If token A is the quote (e.g., IRT), then TVL = reserveA + (reserveB * rate)
+              // If token A is the quote (e.g., USDT), then TVL = reserveA + (reserveB * rate)
               // For simplicity, we'll just use reserveA as an approximation
               totalValueLocked = reserveA
             } else {
@@ -125,11 +125,11 @@ export async function getRecentlyCreatedPools(): Promise<PoolInfo[]> {
               totalValueLocked = reserveB
             }
 
-            // If the quote token is neither IRT nor USDT, try to convert to one of them
-            if (quoteToken !== "IRT" && quoteToken !== "USDT") {
-              // Default to IRT as the display currency
-              quoteToken = "IRT"
-              // In a real implementation, we would convert to IRT or USDT using exchange rates
+            // If the quote token is neither USDT nor USDT, try to convert to one of them
+            if (quoteToken !== "USDT" && quoteToken !== "USDT") {
+              // Default to USDT as the display currency
+              quoteToken = "USDT"
+              // In a real implementation, we would convert to USDT or USDT using exchange rates
               // For now, we'll just use a placeholder value
               totalValueLocked = "N/A"
             }
@@ -163,8 +163,8 @@ export async function getRecentlyCreatedPools(): Promise<PoolInfo[]> {
             reserveB,
             totalValueLocked,
             quoteToken,
-            irtLiquidity,
-            hasIrt,
+            usdtLiquidity,
+            hasUsdt,
             priceChange,
           }
         } catch (error) {

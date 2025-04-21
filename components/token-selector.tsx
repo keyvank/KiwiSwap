@@ -49,22 +49,22 @@ export function TokenSelector({ defaultToken = "ETH", onSelect, customToken, dis
   // Update the initial tokens state to only include IRT and USDT
   const [tokens, setTokens] = useState<TokenInfo[]>([
     {
-      symbol: "IRT",
-      name: "تومان",
-      logo: "https://zanjir.xyz/irt.svg",
-      address: TOKEN_ADDRESSES.IRT,
-    },
-    {
       symbol: "USDT",
       name: "تتر",
       logo: "https://zanjir.xyz/usdt.svg",
       address: TOKEN_ADDRESSES.USDT,
     },
     {
-      symbol: "ETH",
-      name: "اتریوم",
-      logo: "https://zanjir.xyz/eth.svg",
-      address: TOKEN_ADDRESSES.ETH,
+      symbol: "AMOU",
+      name: "عمو",
+      logo: "https://zanjir.xyz/amou.png",
+      address: TOKEN_ADDRESSES.AMOU,
+    },
+    {
+      symbol: "IRT",
+      name: "تومان",
+      logo: "https://zanjir.xyz/irt.svg",
+      address: TOKEN_ADDRESSES.IRT,
     },
   ])
 

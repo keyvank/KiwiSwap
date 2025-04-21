@@ -8,10 +8,10 @@ export default function Home() {
       <AnimatedBackground />
       <div className="z-10 w-full items-center justify-between text-sm">
         <SwapInterface
-          defaultTokenA="IRT"
-          defaultTokenAAddress={TOKEN_ADDRESSES.IRT}
-          defaultTokenB="USDT"
-          defaultTokenBAddress={TOKEN_ADDRESSES.USDT}
+          defaultTokenA="USDT"
+          defaultTokenAAddress={TOKEN_ADDRESSES.USDT}
+          defaultTokenB="AMOU"
+          defaultTokenBAddress={TOKEN_ADDRESSES.AMOU}
         />
       </div>
     </main>

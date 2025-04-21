@@ -2,11 +2,11 @@ import { ethers } from "ethers"
 
 // اطلاعات شبکه Zanjir
 export const ZANJIR_NETWORK = {
-  chainId: "0x2f145", // 192837 in hex
-  chainName: "Zanjir Network",
+  chainId: "0x2f147",
+  chainName: "Zanjir",
   nativeCurrency: {
-    name: "Ethereum",
-    symbol: "ETH",
+    name: "USDT",
+    symbol: "USDT",
     decimals: 18,
   },
   rpcUrls: ["https://rpc.zanjir.xyz"],
@@ -20,6 +20,7 @@ export const POOL_MANAGER_ABI = [
   "function createTokenAndPool(address quoteToken, string memory name, string memory symbol, uint256 totalSupply, uint256 baseAmount, uint256 quoteAmount) external returns (address)",
   "event PoolCreated(address tokenA, address tokenB, address pool)",
   "event TokenCreated(address token)",
+  "event TokenApproved(address token)",
 ]
 
 // ABI برای قرارداد BasicPool
@@ -56,16 +57,17 @@ export const ERC20_ABI = [
 ]
 
 // آدرس قرارداد مدیریت استخر
-export const POOL_MANAGER_ADDRESS = "0xe00b745b5e71337507d43a8584320c4192CA7994"
+export const POOL_MANAGER_ADDRESS = "0x7FB53Bc979C7bDd1a31797DEC8eAD92ca3469538"
 
 // آدرس‌های توکن‌های مشخص شده
 export const TOKEN_ADDRESSES = {
   SOL: "0x36E6dc3CF44FDb8C62c5a11B457A28041f4C6eEF",
-  ETH: "0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF",
+  ETH: "0x681E99A09Db2Be1da8dc54b1504eB81fD6F3724e",
   USDT: "0x9ac37093d6eF6cb5fC0944DCed3AA56eBCE050cb",
   IRT: "0x09E5DCF3872DD653c4CCA5378AbA77088457A8a9",
   DOGE: "0xC7d2B19934594c43b6ec678507Df24D49e7e2F69",
   BTC: "0x3B05FB2fA2AE1447f61A0456f102350626A69f0b",
+  AMOU: "0xC9b4C81e4511b109Fb41eB9C055b619D102761d2"
 }
 
 // Add a cache for token symbols to avoid repeated calls to the contract

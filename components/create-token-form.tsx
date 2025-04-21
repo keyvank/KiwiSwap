@@ -43,7 +43,7 @@ export function CreateTokenForm() {
   const [tokenName, setTokenName] = useState("")
   const [tokenSymbol, setTokenSymbol] = useState("")
   const [totalSupply, setTotalSupply] = useState("")
-  const [irtAmount, setIrtAmount] = useState("")
+  const [usdtAmount, setUsdtAmount] = useState("")
   const [liquidityPercentage, setLiquidityPercentage] = useState(20) // Default 20%
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -52,7 +52,7 @@ export function CreateTokenForm() {
 
   // Calculate token price
   const [tokenPrice, setTokenPrice] = useState<string>("0")
-  const [irtPrice, setIrtPrice] = useState<string>("0")
+  const [usdtPrice, setUsdtPrice] = useState<string>("0")
 
   // Calculate liquidity amounts
   const calculateLiquidityAmount = () => {
@@ -65,19 +65,19 @@ export function CreateTokenForm() {
   // Calculate prices whenever liquidity amounts change
   useEffect(() => {
     const tokenLiquidity = Number(calculateLiquidityAmount())
-    const irtLiquidity = Number(irtAmount || "0")
+    const usdtLiquidity = Number(usdtAmount || "0")
 
-    if (tokenLiquidity > 0 && irtLiquidity > 0) {
-      // Price of token in IRT
-      setTokenPrice((irtLiquidity / tokenLiquidity).toFixed(6))
+    if (tokenLiquidity > 0 && usdtLiquidity > 0) {
+      // Price of token in USDT
+      setTokenPrice((usdtLiquidity / tokenLiquidity).toFixed(6))
 
-      // Price of IRT in token
-      setIrtPrice((tokenLiquidity / irtLiquidity).toFixed(6))
+      // Price of USDT in token
+      setUsdtPrice((tokenLiquidity / usdtLiquidity).toFixed(6))
     } else {
       setTokenPrice("0")
-      setIrtPrice("0")
+      setUsdtPrice("0")
     }
-  }, [totalSupply, liquidityPercentage, irtAmount])
+  }, [totalSupply, liquidityPercentage, usdtAmount])
 
   // Handle token creation
   const handleCreateToken = async () => {
@@ -102,8 +102,8 @@ export function CreateTokenForm() {
       return
     }
 
-    if (!irtAmount || isNaN(Number(irtAmount)) || Number(irtAmount) <= 0) {
-      setError("لطفا مقدار IRT را به صورت عدد مثبت وارد کنید")
+    if (!usdtAmount || isNaN(Number(usdtAmount)) || Number(usdtAmount) <= 0) {
+      setError("لطفا مقدار USDT را به صورت عدد مثبت وارد کنید")
       return
     }
 
@@ -133,29 +133,29 @@ export function CreateTokenForm() {
       // Connect to pool manager contract
       const poolManagerContract = new ethers.Contract(POOL_MANAGER_ADDRESS, POOL_MANAGER_ABI, signer)
 
-      // Connect to IRT token
-      const irtTokenContract = await connectToToken(TOKEN_ADDRESSES.IRT)
+      // Connect to USDT token
+      const usdtTokenContract = await connectToToken(TOKEN_ADDRESSES.USDT)
 
       // Calculate amounts
       const totalSupplyWei = ethers.parseEther(totalSupply)
       const poolBaseSupplyWei = ethers.parseEther(calculateLiquidityAmount())
-      const poolQuoteSupplyWei = ethers.parseEther(irtAmount) // Use the user-specified IRT amount
+      const poolQuoteSupplyWei = ethers.parseEther(usdtAmount) // Use the user-specified USDT amount
 
-      // Check if user has enough IRT
-      const irtBalance = await irtTokenContract.balanceOf(account)
-      if (irtBalance < poolQuoteSupplyWei) {
-        setError(`شما به اندازه کافی توکن IRT ندارید. مقدار مورد نیاز: ${ethers.formatEther(poolQuoteSupplyWei)} IRT`)
+      // Check if user has enough USDT
+      const usdtBalance = await usdtTokenContract.balanceOf(account)
+      if (usdtBalance < poolQuoteSupplyWei) {
+        setError(`شما به اندازه کافی توکن USDT ندارید. مقدار مورد نیاز: ${ethers.formatEther(poolQuoteSupplyWei)} USDT`)
         setIsCreating(false)
         return
       }
 
-      // Approve IRT token for pool manager
-      const approveTx = await irtTokenContract.approve(POOL_MANAGER_ADDRESS, poolQuoteSupplyWei)
+      // Approve USDT token for pool manager
+      const approveTx = await usdtTokenContract.approve(POOL_MANAGER_ADDRESS, poolQuoteSupplyWei)
       await approveTx.wait()
 
       // Create token and pool - use the correct function name from the ABI
       const tx = await poolManagerContract.createTokenAndPool(
-        TOKEN_ADDRESSES.IRT,
+        TOKEN_ADDRESSES.USDT,
         tokenName,
         tokenSymbol,
         totalSupplyWei,
@@ -169,26 +169,26 @@ export function CreateTokenForm() {
 
       // Extract the created token address from the event logs
       // This is a simplified approach - in a real implementation, you would parse the event logs properly
-      const tokenCreatedEvent = receipt.logs.find((log) => log.topics[0] === ethers.id("TokenCreated(address)"))
+      const tokenApprovedEvent = receipt.logs.find((log) => log.topics[0] === ethers.id("TokenApproved(address)"))
 
       let tokenAddress = null
-      if (tokenCreatedEvent) {
+      if (tokenApprovedEvent) {
         // Parse the event data to get the token address
         const decodedData = ethers.AbiCoder.defaultAbiCoder().decode(
           ["address"],
-          ethers.dataSlice(tokenCreatedEvent.data, 0),
+          ethers.dataSlice(tokenApprovedEvent.data, 0),
         )
         tokenAddress = decodedData[0]
       }
 
       setCreatedTokenAddress(tokenAddress)
-      setSuccess(`توکن ${tokenSymbol} با موفقیت ایجاد شد و استخر نقدینگی آن با IRT راه‌اندازی شد.`)
+      setSuccess(`توکن ${tokenSymbol} با موفقیت ایجاد شد و استخر نقدینگی آن با USDT راه‌اندازی شد.`)
 
       // Reset form
       setTokenName("")
       setTokenSymbol("")
       setTotalSupply("")
-      setIrtAmount("")
+      setUsdtAmount("")
       setLiquidityPercentage(20)
     } catch (error) {
       console.error("Error creating token:", error)
@@ -348,24 +348,24 @@ export function CreateTokenForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="irtAmount" className="flex items-center gap-1">
+                  <Label htmlFor="usdtAmount" className="flex items-center gap-1">
                     <DollarSign className="h-4 w-4" />
-                    مقدار IRT
+                    مقدار USDT
                   </Label>
                   <Input
-                    id="irtAmount"
+                    id="usdtAmount"
                     type="number"
                     placeholder="مثال: 1000"
-                    value={irtAmount}
-                    onChange={(e) => setIrtAmount(e.target.value)}
+                    value={usdtAmount}
+                    onChange={(e) => setUsdtAmount(e.target.value)}
                     min="0"
                     step="1"
                   />
-                  {irtAmount && !isNaN(Number(irtAmount)) && Number(irtAmount) > 0 && (
-                    <p className="text-xs text-primary mt-1">{toPersianRepresentation(irtAmount)} تومان</p>
+                  {usdtAmount && !isNaN(Number(usdtAmount)) && Number(usdtAmount) > 0 && (
+                    <p className="text-xs text-primary mt-1">{toPersianRepresentation(usdtAmount)} دلار</p>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    مقدار تومان (IRT) که می‌خواهید به استخر نقدینگی اضافه کنید (تعیین‌کننده قیمت اولیه توکن)
+                    مقدار دلار (USDT) که می‌خواهید به استخر نقدینگی اضافه کنید (تعیین‌کننده قیمت اولیه توکن)
                   </p>
                 </div>
               </div>
@@ -406,9 +406,9 @@ export function CreateTokenForm() {
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span>نقدینگی اولیه IRT:</span>
+                      <span>نقدینگی اولیه USDT:</span>
                       <span dir="ltr" className="font-mono">
-                        {irtAmount ? Number(irtAmount).toLocaleString() : "0"}
+                        {usdtAmount ? Number(usdtAmount).toLocaleString() : "0"}
                       </span>
                     </div>
                   </div>
@@ -426,7 +426,7 @@ export function CreateTokenForm() {
                         </div>
                         <div className="text-xl px-3 text-primary">=</div>
                         <div className="flex-1 text-left" dir="ltr">
-                          {tokenPrice} IRT
+                          {tokenPrice} USDT
                         </div>
                       </div>
                     </div>
@@ -439,11 +439,11 @@ export function CreateTokenForm() {
                     <div>
                       <h3 className="font-medium mb-1">نکات مهم</h3>
                       <ul className="text-sm space-y-1 list-disc list-inside">
-                        <li>برای ایجاد استخر نقدینگی، به توکن IRT نیاز دارید</li>
+                        <li>برای ایجاد استخر نقدینگی، به توکن USDT نیاز دارید</li>
                         <li>پس از ایجاد توکن، شما مالک کل عرضه آن خواهید بود</li>
                         <li>بخشی از توکن‌ها به استخر نقدینگی اضافه می‌شود</li>
                         <li>توکن‌های LP به کیف پول شما واریز می‌شود</li>
-                        <li>قیمت اولیه توکن بر اساس نسبت IRT به تعداد توکن‌های اضافه شده به استخر تعیین می‌شود</li>
+                        <li>قیمت اولیه توکن بر اساس نسبت USDT به تعداد توکن‌های اضافه شده به استخر تعیین می‌شود</li>
                       </ul>
 
                       <div className="mt-4 pt-2 border-t border-primary/20">
