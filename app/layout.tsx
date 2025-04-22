@@ -7,6 +7,8 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Header } from "@/components/header"
 // Import the Footer component
 import { Footer } from "@/components/footer"
+// Import the WalletProvider
+import { WalletProvider } from "@/contexts/wallet-context"
 
 const vazirmatn = Vazirmatn({
   subsets: ["arabic"],
@@ -29,17 +31,13 @@ export default function RootLayout({
       {/* Update the body section to include the Header component */}
       <body className={`${vazirmatn.variable} font-vazirmatn bg-background min-h-screen flex flex-col`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <WalletProvider>
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </WalletProvider>
         </ThemeProvider>
       </body>
     </html>
   )
 }
-
-import "./globals.css"
-
-
-
-import './globals.css'

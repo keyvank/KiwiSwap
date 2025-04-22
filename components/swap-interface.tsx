@@ -8,11 +8,11 @@ import { NetworkWarning } from "@/components/network-warning"
 import { SwapForm } from "@/components/swap-form"
 import { LiquidityForm } from "@/components/liquidity-form"
 import { SwapHistory } from "@/components/swap-history"
-import { useWallet } from "@/hooks/use-wallet"
 import { usePool } from "@/hooks/use-pool"
 import { TOKEN_ADDRESSES } from "@/lib/contract-utils"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { useWallet } from "@/contexts/wallet-context"
 
 interface CustomTokenInfo {
   symbol: string
@@ -45,6 +45,7 @@ export function SwapInterface({
   const [isExpanded, setIsExpanded] = useState(false)
   const [showPoolInfo, setShowPoolInfo] = useState(false)
   const [customTokenAdded, setCustomTokenAdded] = useState(false)
+  const [showWalletOverlay, setShowWalletOverlay] = useState(false)
 
   const { connected, account, isCorrectNetwork, switchNetwork, connect, isConnecting } = useWallet()
 
@@ -72,6 +73,11 @@ export function SwapInterface({
     tokenAAddress,
     tokenBAddress,
   })
+
+  useEffect(() => {
+    // Only show the wallet overlay if not connected AND on liquidity or history tabs
+    setShowWalletOverlay(!connected && (activeTab === "liquidity" || activeTab === "history"))
+  }, [connected, activeTab])
 
   // Add custom token to localStorage if provided
   useEffect(() => {
@@ -162,9 +168,6 @@ export function SwapInterface({
     }
   }
 
-  // Check if we need to show the wallet connection overlay
-  const showWalletOverlay = !connected && (activeTab === "liquidity" || activeTab === "history")
-
   return (
     <div
       className={cn(
@@ -202,7 +205,7 @@ export function SwapInterface({
                   <div className="absolute inset-0 z-10 backdrop-blur-sm bg-background/70 rounded-lg flex flex-col items-center justify-center p-6 text-center">
                     <Wallet className="h-12 w-12 mb-4 text-primary" />
                     <h3 className="text-lg font-medium mb-2">اتصال کیف پول</h3>
-                    <p className="text-muted-foreground mb-4">
+                    <p dir="rtl" className="text-muted-foreground mb-4">
                       برای مشاهده {activeTab === "liquidity" ? "نقدینگی" : "تاریخچه مبادلات"} لطفا ابتدا کیف پول خود را
                       متصل کنید.
                     </p>
@@ -290,4 +293,3 @@ export function SwapInterface({
     </div>
   )
 }
-

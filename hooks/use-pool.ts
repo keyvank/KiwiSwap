@@ -63,12 +63,9 @@ const getPoolInfo = async (tokenAAddress: string, tokenBAddress: string) => {
     reservoirAFormatted = ethers.formatUnits(reservoirA, decimalsA)
     reservoirBFormatted = ethers.formatUnits(reservoirB, decimalsB)
 
-    // دریافت نرخ تبادل با فرمت جدید (دو مقدار)
-    const [rateAtoB, rateBtoA] = await pool.getExchangeRate()
-
     // محاسبه نرخ تبادل
     let exchangeRate = "0"
-    exchangeRate = ethers.formatUnits(rateAtoB, 18)
+    exchangeRate = ethers.formatUnits(reservoirA * BigInt("1000000000000000000") / reservoirB, 18)
 
     return {
       exists: true,

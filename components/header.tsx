@@ -2,13 +2,13 @@
 
 import Link from "next/link"
 import { ConnectWallet } from "@/components/connect-wallet"
-import { useWallet } from "@/hooks/use-wallet"
 import { NetworkWarning } from "@/components/network-warning"
 import { Store, Info, Sparkles, ArrowLeftRight } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { useWallet } from "@/contexts/wallet-context"
 
 export function Header() {
-  const { connected, account, isCorrectNetwork, connect, disconnect, switchNetwork } = useWallet()
+  const { connected, isCorrectNetwork, switchNetwork } = useWallet()
 
   return (
     <header className="w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -45,10 +45,9 @@ export function Header() {
         <div className="flex items-center gap-2">
           {connected && !isCorrectNetwork && <NetworkWarning onSwitchNetwork={switchNetwork} />}
           <ThemeToggle />
-          <ConnectWallet connected={connected} account={account} onConnect={connect} onDisconnect={disconnect} />
+          <ConnectWallet />
         </div>
       </div>
     </header>
   )
 }
-

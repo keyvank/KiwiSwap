@@ -33,7 +33,7 @@ interface CandleData {
   y: number[] // [open, high, low, close]
 }
 
-// Process swap events to hourly candlestick data
+// Update the processSwapEventsToChartData function to filter for only the last 24 hours
 const processSwapEventsToChartData = (
   swapEvents: PriceChartProps["swapEvents"] = [],
   baseToken: string,
@@ -45,11 +45,21 @@ const processSwapEventsToChartData = (
     return []
   }
 
+  // Filter events to only include those from the last 24 hours
+  const now = Math.floor(Date.now() / 1000)
+  const oneDayAgo = now - 24 * 60 * 60 // 24 hours in seconds
+  const recentEvents = swapEvents.filter((event) => event.timestamp >= oneDayAgo)
+
+  // If no events in the last 24 hours, return empty array
+  if (recentEvents.length === 0) {
+    return []
+  }
+
   // Group events by hour
   const eventsByHour = new Map<string, Array<any>>()
 
   // Sort events by timestamp (oldest first)
-  const sortedEvents = [...swapEvents].sort((a, b) => a.timestamp - b.timestamp)
+  const sortedEvents = [...recentEvents].sort((a, b) => a.timestamp - b.timestamp)
 
   sortedEvents.forEach((event) => {
     const date = new Date(event.timestamp * 1000)
@@ -92,11 +102,12 @@ const processSwapEventsToChartData = (
 
   // Fill in missing hours if needed
   if (hours.length > 0) {
-    const startDate = new Date(hours[0])
+    // For 24-hour chart, we want to show all 24 hours even if some have no data
+    const startDate = new Date(Math.max(new Date(hours[0]).getTime(), new Date(oneDayAgo * 1000).getTime()))
     const endDate = new Date()
     const hourRange: string[] = []
 
-    // Generate all hours in range
+    // Generate all hours in range (up to 24 hours)
     for (let d = new Date(startDate); d <= endDate; d.setHours(d.getHours() + 1)) {
       const hourDate = new Date(d)
       hourDate.setMinutes(0, 0, 0) // Ensure we're at the start of the hour
@@ -166,7 +177,7 @@ export function PriceChart({
   const [priceChangePercentage, setPriceChangePercentage] = useState<number>(0)
   const [hasData, setHasData] = useState(false)
 
-  // Update the useEffect to use the new function
+  // Update the useEffect to calculate price change based on 24-hour data
   useEffect(() => {
     if (!poolExists) {
       setSeries([])
@@ -317,28 +328,28 @@ export function PriceChart({
           const date = new Date(w.globals.seriesX[seriesIndex][dataPointIndex])
 
           return `
-            <div class="apexcharts-tooltip-candlestick" dir="rtl" style="padding: 8px; background: hsl(var(--background)); border: 1px solid hsl(var(--border)); border-radius: 4px;">
-              <div style="margin-bottom: 4px; font-weight: bold;">
-                ${date.toLocaleDateString("fa-IR")} ${date.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}
-              </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
-                <span>باز شدن:</span>
-                <span style="font-family: monospace;">${o.toFixed(6)} ${quoteToken}</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
-                <span>بالاترین:</span>
-                <span style="font-family: monospace;">${h.toFixed(6)} ${quoteToken}</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
-                <span>پایین‌ترین:</span>
-                <span style="font-family: monospace;">${l.toFixed(6)} ${quoteToken}</span>
-              </div>
-              <div style="display: flex; justify-content: space-between;">
-                <span>بسته شدن:</span>
-                <span style="font-family: monospace;">${c.toFixed(6)} ${quoteToken}</span>
-              </div>
+          <div class="apexcharts-tooltip-candlestick" dir="rtl" style="padding: 8px; background: hsl(var(--background)); border: 1px solid hsl(var(--border)); border-radius: 4px;">
+            <div style="margin-bottom: 4px; font-weight: bold;">
+              ${date.toLocaleDateString("fa-IR")} ${date.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}
             </div>
-          `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+              <span>باز شدن:</span>
+              <span style="font-family: monospace;">${o.toFixed(6)} ${quoteToken}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+              <span>بالاترین:</span>
+              <span style="font-family: monospace;">${h.toFixed(6)} ${quoteToken}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+              <span>پایین‌ترین:</span>
+              <span style="font-family: monospace;">${l.toFixed(6)} ${quoteToken}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>بسته شدن:</span>
+              <span style="font-family: monospace;">${c.toFixed(6)} ${quoteToken}</span>
+            </div>
+          </div>
+        `
         },
       },
     })
@@ -382,6 +393,7 @@ export function PriceChart({
 
   const isPriceUp = priceChange >= 0
 
+  // Update the text at the bottom of the chart to indicate 24-hour data
   return (
     <Card className="border-primary/20 h-full">
       <CardContent className="p-6">
@@ -407,10 +419,9 @@ export function PriceChart({
         </div>
 
         <div className="text-xs text-muted-foreground text-center mt-4">
-          نمودار قیمت بر اساس مبادلات ساعتی نمایش داده می‌شود.
+          نمودار قیمت بر اساس مبادلات 24 ساعت اخیر نمایش داده می‌شود.
         </div>
       </CardContent>
     </Card>
   )
 }
-

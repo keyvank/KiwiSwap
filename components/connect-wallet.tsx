@@ -3,35 +3,27 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Wallet, LogOut } from "lucide-react"
-import { connectWallet, checkZanjirNetwork, switchToZanjirNetwork, disconnectWallet } from "@/lib/contract-utils"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useWallet } from "@/contexts/wallet-context"
 
 interface ConnectWalletProps {
-  connected: boolean
+  connected?: boolean
   account?: string
-  onConnect: () => void
-  onDisconnect: () => void
+  onConnect?: () => void
+  onDisconnect?: () => void
 }
 
-export function ConnectWallet({ connected, account, onConnect, onDisconnect }: ConnectWalletProps) {
+export function ConnectWallet({ onConnect, onDisconnect }: ConnectWalletProps) {
   const [isConnecting, setIsConnecting] = useState(false)
+  const { connected, account, connect, disconnect } = useWallet()
 
   const handleConnect = async () => {
     if (connected) return
 
     setIsConnecting(true)
     try {
-      // بررسی اتصال به شبکه Zanjir
-      const isZanjirNetwork = await checkZanjirNetwork()
-
-      if (!isZanjirNetwork) {
-        // تلاش برای تغییر به شبکه Zanjir
-        await switchToZanjirNetwork()
-      }
-
-      // اتصال به کیف پول
-      await connectWallet()
-      onConnect()
+      await connect()
+      if (onConnect) onConnect()
     } catch (error) {
       console.error("خطا در اتصال به کیف پول:", error)
     } finally {
@@ -41,8 +33,8 @@ export function ConnectWallet({ connected, account, onConnect, onDisconnect }: C
 
   const handleDisconnect = async () => {
     try {
-      await disconnectWallet()
-      onDisconnect()
+      await disconnect()
+      if (onDisconnect) onDisconnect()
     } catch (error) {
       console.error("خطا در قطع اتصال کیف پول:", error)
     }
@@ -86,4 +78,3 @@ export function ConnectWallet({ connected, account, onConnect, onDisconnect }: C
     </DropdownMenu>
   )
 }
-
