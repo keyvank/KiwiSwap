@@ -143,10 +143,10 @@ const processSwapEventsToChartData = (
         candleData.push({
           x: date,
           y: [
-            Number.parseFloat(open.toFixed(6)),
-            Number.parseFloat(high.toFixed(6)),
-            Number.parseFloat(low.toFixed(6)),
-            Number.parseFloat(close.toFixed(6)),
+            Number.parseFloat(open.toFixed(12)),
+            Number.parseFloat(high.toFixed(12)),
+            Number.parseFloat(low.toFixed(12)),
+            Number.parseFloat(close.toFixed(12)),
           ],
         })
 
@@ -299,7 +299,7 @@ export function PriceChart({
           enabled: true,
         },
         labels: {
-          formatter: (val) => val.toFixed(6),
+          formatter: (val) => val.toFixed(12),
           style: {
             fontSize: "12px",
           },
@@ -334,19 +334,19 @@ export function PriceChart({
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
               <span>باز شدن:</span>
-              <span style="font-family: monospace;">${o.toFixed(6)} ${quoteToken}</span>
+              <span style="font-family: monospace;">${o.toFixed(12)} ${quoteToken}</span>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
               <span>بالاترین:</span>
-              <span style="font-family: monospace;">${h.toFixed(6)} ${quoteToken}</span>
+              <span style="font-family: monospace;">${h.toFixed(12)} ${quoteToken}</span>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
               <span>پایین‌ترین:</span>
-              <span style="font-family: monospace;">${l.toFixed(6)} ${quoteToken}</span>
+              <span style="font-family: monospace;">${l.toFixed(12)} ${quoteToken}</span>
             </div>
             <div style="display: flex; justify-content: space-between;">
               <span>بسته شدن:</span>
-              <span style="font-family: monospace;">${c.toFixed(6)} ${quoteToken}</span>
+              <span style="font-family: monospace;">${c.toFixed(12)} ${quoteToken}</span>
             </div>
           </div>
         `
@@ -401,7 +401,7 @@ export function PriceChart({
           <h3 className="text-lg font-medium">نمودار قیمت</h3>
           <div className="flex items-center gap-2">
             <span dir="ltr" className="font-mono text-sm">
-              1 {baseToken} = {lastPrice.toFixed(6)} {quoteToken}
+              1 {baseToken} = {lastPrice.toFixed(12)} {quoteToken}
             </span>
             <span
               className={`text-xs px-2 py-0.5 rounded-full ${

@@ -258,11 +258,11 @@ export function SwapHistory({
 
                               // If input token has higher or equal priority, show input as base
                               if (priorityIn < priorityOut) {
-                                return `1 ${event.tokenIn} = ${(Number(event.amountOut) / Number(event.amountIn)).toFixed(6)} ${event.tokenOut}`
+                                return `1 ${event.tokenIn} = ${(Number(event.amountOut) / Number(event.amountIn)).toFixed(12)} ${event.tokenOut}`
                               }
                               // Otherwise show output as base
                               else {
-                                return `1 ${event.tokenOut} = ${(Number(event.amountIn) / Number(event.amountOut)).toFixed(6)} ${event.tokenIn}`
+                                return `1 ${event.tokenOut} = ${(Number(event.amountIn) / Number(event.amountOut)).toFixed(12)} ${event.tokenIn}`
                               }
                             })()}
                           </span>
