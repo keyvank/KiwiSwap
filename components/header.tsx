@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { ConnectWallet } from "@/components/connect-wallet"
 import { NetworkWarning } from "@/components/network-warning"
+import { NetworkToggle } from "@/components/network-toggle"
 import { Store, Info, Sparkles, ArrowLeftRight } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useWallet } from "@/contexts/wallet-context"
@@ -44,6 +45,7 @@ export function Header() {
         </div>
         <div className="flex items-center gap-2">
           {connected && !isCorrectNetwork && <NetworkWarning onSwitchNetwork={switchNetwork} />}
+          <NetworkToggle />
           <ThemeToggle />
           <ConnectWallet />
         </div>

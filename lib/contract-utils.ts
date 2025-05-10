@@ -1,17 +1,69 @@
 import { ethers } from "ethers"
 
-// اطلاعات شبکه Zanjir
-export const ZANJIR_NETWORK = {
-  chainId: "0x2f147",
-  chainName: "Zanjir",
-  nativeCurrency: {
-    name: "USDT",
-    symbol: "USDT",
-    decimals: 18,
-  },
-  rpcUrls: ["https://rpc.zanjir.xyz"],
-  blockExplorerUrls: ["https://zanjir.xyz/explorer"],
+// Add this enum at the top of the file
+export enum NetworkType {
+  MAINNET = "mainnet",
+  TESTNET = "testnet",
 }
+
+// Replace the existing ZANJIR_NETWORK constant with this
+export const NETWORK_CONFIGS = {
+  [NetworkType.MAINNET]: {
+    chainId: "0x2f147",
+    chainName: "Zanjir",
+    nativeCurrency: {
+      name: "USDT",
+      symbol: "USDT",
+      decimals: 18,
+    },
+    rpcUrls: ["https://rpc.zanjir.xyz"],
+    blockExplorerUrls: ["https://zanjir.xyz/explorer"],
+  },
+  [NetworkType.TESTNET]: {
+    chainId: "0x2f148",
+    chainName: "Zanjir Testnet",
+    nativeCurrency: {
+      name: "USDT",
+      symbol: "USDT",
+      decimals: 18,
+    },
+    rpcUrls: ["https://rpc-testnet.zanjir.xyz:443"],
+    blockExplorerUrls: ["https://zanjir.xyz/explorer"],
+  },
+}
+
+// Add a variable to track the current network
+let currentNetwork = NetworkType.MAINNET
+
+// Add a function to get the current network configuration
+export function getZanjirNetwork() {
+  return NETWORK_CONFIGS[currentNetwork]
+}
+
+// Add a function to set the current network
+export function setNetwork(networkType: NetworkType) {
+  currentNetwork = networkType
+  // Return the new network config
+  return getZanjirNetwork()
+}
+
+// Add a function to get the current network type
+export function getCurrentNetworkType() {
+  return currentNetwork
+}
+
+// اطلاعات شبکه Zanjir
+// export const ZANJIR_NETWORK = {
+//   chainId: "0x2f147",
+//   chainName: "Zanjir",
+//   nativeCurrency: {
+//     name: "USDT",
+//     symbol: "USDT",
+//     decimals: 18,
+//   },
+//   rpcUrls: ["https://rpc.zanjir.xyz"],
+//   blockExplorerUrls: ["https://zanjir.xyz/explorer"],
+// }
 
 // ABI برای قرارداد مدیریت استخر
 export const POOL_MANAGER_ABI = [
@@ -67,7 +119,7 @@ export const TOKEN_ADDRESSES = {
   IRT: "0x09E5DCF3872DD653c4CCA5378AbA77088457A8a9",
   DOGE: "0xC7d2B19934594c43b6ec678507Df24D49e7e2F69",
   BTC: "0x3B05FB2fA2AE1447f61A0456f102350626A69f0b",
-  AMOU: "0xC9b4C81e4511b109Fb41eB9C055b619D102761d2"
+  AMOU: "0xC9b4C81e4511b109Fb41eB9C055b619D102761d2",
 }
 
 // Add a cache for token symbols to avoid repeated calls to the contract
@@ -99,6 +151,7 @@ export async function getTokenSymbol(tokenAddress: string): Promise<string> {
 }
 
 // بررسی اتصال به شبکه Zanjir
+// Update the checkZanjirNetwork function
 export async function checkZanjirNetwork() {
   if (typeof window === "undefined" || !window.ethereum) {
     throw new Error("MetaMask یا کیف پول سازگار با Web3 یافت نشد")
@@ -106,7 +159,7 @@ export async function checkZanjirNetwork() {
 
   try {
     const chainId = await window.ethereum.request({ method: "eth_chainId" })
-    return chainId === ZANJIR_NETWORK.chainId
+    return chainId === getZanjirNetwork().chainId
   } catch (error) {
     console.error("خطا در بررسی شبکه:", error)
     return false
@@ -114,6 +167,7 @@ export async function checkZanjirNetwork() {
 }
 
 // افزودن شبکه Zanjir به MetaMask
+// Update the addZanjirNetwork function
 export async function addZanjirNetwork() {
   if (typeof window === "undefined" || !window.ethereum) {
     throw new Error("MetaMask یا کیف پول سازگار با Web3 یافت نشد")
@@ -122,7 +176,7 @@ export async function addZanjirNetwork() {
   try {
     await window.ethereum.request({
       method: "wallet_addEthereumChain",
-      params: [ZANJIR_NETWORK],
+      params: [getZanjirNetwork()],
     })
     return true
   } catch (error) {
@@ -132,23 +186,53 @@ export async function addZanjirNetwork() {
 }
 
 // تغییر شبکه به Zanjir
+// Update the switchToZanjirNetwork function to use the current network config
+
+// Update the switchToZanjirNetwork function to reflect the selected network type
 export async function switchToZanjirNetwork() {
   if (typeof window === "undefined" || !window.ethereum) {
     throw new Error("MetaMask یا کیف پول سازگار با Web3 یافت نشد")
   }
 
   try {
-    await window.ethereum.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: ZANJIR_NETWORK.chainId }],
-    })
-    return true
-  } catch (error) {
-    // اگر شبکه وجود نداشته باشد، آن را اضافه کنید
-    if (error.code === 4902) {
-      return await addZanjirNetwork()
+    // Get the current network configuration based on selected network type
+    const currentNetworkConfig = getZanjirNetwork()
+
+    // First try to switch to the network
+    try {
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: currentNetworkConfig.chainId }],
+      })
+
+      return true
+    } catch (switchError: any) {
+      // This error code indicates that the chain has not been added to MetaMask
+      if (switchError.code === 4902) {
+        try {
+          // Add the network to MetaMask
+          await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [currentNetworkConfig],
+          })
+
+          // After adding, try to switch to it again
+          await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: currentNetworkConfig.chainId }],
+          })
+
+          return true
+        } catch (addError) {
+          console.error("Error adding network:", addError)
+          throw addError
+        }
+      }
+      console.error("Error switching network:", switchError)
+      throw switchError
     }
-    console.error("خطا در تغییر به شبکه Zanjir:", error)
+  } catch (error) {
+    console.error("Error in switchToZanjirNetwork:", error)
     throw error
   }
 }
@@ -164,21 +248,14 @@ export function getProvider() {
 }
 
 // تابع برای اتصال به کیف پول و اطمینان از استفاده از شبکه Zanjir
+// Update the connectWallet function to force reconnection
 export async function connectWallet() {
   if (typeof window === "undefined" || !window.ethereum) {
     throw new Error("MetaMask یا کیف پول سازگار با Web3 یافت نشد")
   }
 
   try {
-    // بررسی اتصال به شبکه Zanjir
-    const isZanjirNetwork = await checkZanjirNetwork()
-
-    if (!isZanjirNetwork) {
-      // تلاش برای تغییر به شبکه Zanjir
-      await switchToZanjirNetwork()
-    }
-
-    // درخواست اتصال به حساب‌ها
+    // Force MetaMask to show the connection prompt by using eth_requestAccounts
     const accounts = await window.ethereum.request({ method: "eth_requestAccounts" })
 
     if (accounts.length === 0) {
@@ -193,10 +270,32 @@ export async function connectWallet() {
 }
 
 // تابع برای قطع اتصال کیف پول
+// Update the disconnectWallet function to properly reset connection
 export async function disconnectWallet() {
-  // متاسفانه MetaMask API به طور مستقیم امکان قطع اتصال را فراهم نمی‌کند
-  // اما می‌توانیم وضعیت اتصال را در برنامه خود مدیریت کنیم
-  return true
+  if (typeof window === "undefined" || !window.ethereum) {
+    return true
+  }
+
+  try {
+    // MetaMask doesn't provide a direct disconnect method,
+    // but we can try to revoke permissions if the _metamask property exists
+    if (window.ethereum._metamask) {
+      try {
+        await window.ethereum.request({
+          method: "wallet_revokePermissions",
+          params: [{ eth_accounts: {} }],
+        })
+      } catch (e) {
+        // Ignore errors from this experimental method
+        console.log("Could not revoke permissions")
+      }
+    }
+
+    return true
+  } catch (error) {
+    console.error("Error in disconnectWallet:", error)
+    return false
+  }
 }
 
 // تابع برای بررسی وضعیت اتصال کیف پول
@@ -809,7 +908,7 @@ export async function getRemoveLiquidityPreview(tokenAAddress: string, tokenBAdd
   }
 }
 
-// تابع برای برداشت نقدینگی
+// &#x0422;&#x0430;&#x0431;&#x0435;&#x044C; &#x0434;&#x043B;&#x044F; &#x0431;&#x0435;&#x0440;&#x0435;&#x0437;&#x043D;&#x043E;&#x0433;&#x043E; &#x0432;&#x044B;&#x0432;&#x043E;&#x0434;&#x0430; &#x043D;&#x0430;&#x043A;&#x0434;&#x0438;&#x043D;&#x0433;&#x0438;
 export async function removeLiquidity(tokenAAddress: string, tokenBAddress: string, liquidity: string) {
   try {
     // مرتب‌سازی آدرس‌ها
@@ -1075,4 +1174,3 @@ export async function getTokenDecimals(tokenAddress: string): Promise<number> {
     return 18 // Default to 18 decimals as fallback
   }
 }
-
