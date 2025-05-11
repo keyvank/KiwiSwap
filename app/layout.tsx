@@ -9,6 +9,8 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 // Import the WalletProvider
 import { WalletProvider } from "@/contexts/wallet-context"
+// Import the NetworkProvider
+import { NetworkProvider } from "@/contexts/network-context"
 
 const vazirmatn = Vazirmatn({
   subsets: ["arabic"],
@@ -32,9 +34,11 @@ export default function RootLayout({
       <body className={`${vazirmatn.variable} font-vazirmatn bg-background min-h-screen flex flex-col`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           <WalletProvider>
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
+            <NetworkProvider>
+              <Header />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </NetworkProvider>
           </WalletProvider>
         </ThemeProvider>
       </body>

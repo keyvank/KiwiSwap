@@ -3,13 +3,7 @@
 import type React from "react"
 import { createContext, useContext, useState, useEffect, useCallback } from "react"
 import { useToast } from "@/hooks/use-toast"
-import {
-  connectWallet,
-  checkZanjirNetwork,
-  switchToZanjirNetwork,
-  checkWalletConnection,
-  disconnectWallet,
-} from "@/lib/contract-utils"
+import { checkZanjirNetwork, switchToZanjirNetwork, checkWalletConnection } from "@/lib/contract-utils"
 
 interface WalletContextType {
   connected: boolean
@@ -19,6 +13,7 @@ interface WalletContextType {
   connect: () => Promise<string | null>
   disconnect: () => Promise<void>
   switchNetwork: () => Promise<boolean>
+  forceUpdateConnection: (account: string) => void
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined)
@@ -67,7 +62,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
             setIsCorrectNetwork(isZanjir)
           }
 
-          // حذف event listeners قبلی برای جلوگ��ری از تکرار
+          // حذف event listeners قبلی برای جلوگری از تکرار
           window.ethereum.removeListener("accountsChanged", handleAccountsChanged)
           window.ethereum.removeListener("chainChanged", handleChainChanged)
 
@@ -91,36 +86,36 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     checkConnection()
   }, [resetUserData])
 
+  // Update the handleConnect function to force reconnection
   const handleConnect = async () => {
-    if (connected) return account
-
     setIsConnecting(true)
-    try {
-      // بررسی اتصال به شبکه Zanjir
-      const isZanjirNetwork = await checkZanjirNetwork()
 
-      if (!isZanjirNetwork) {
-        // تلاش برای تغییر به شبکه Zanjir
-        await switchToZanjirNetwork()
+    try {
+      // Request connection to accounts - this will trigger the MetaMask prompt
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" })
+
+      if (accounts.length === 0) {
+        throw new Error("No account selected")
       }
 
-      // اتصال به کیف پول
-      const account = await connectWallet()
       setConnected(true)
-      setAccount(account)
-      setIsCorrectNetwork(true)
+      setAccount(accounts[0])
+
+      // Check if connected to the correct network
+      const isZanjirNetwork = await checkZanjirNetwork()
+      setIsCorrectNetwork(isZanjirNetwork)
 
       toast({
         title: "کیف پول متصل شد",
-        description: "شما با موفقیت به شبکه Zanjir متصل شدید.",
+        description: "شما با موفقیت به کیف پول متصل شدید.",
       })
 
-      return account
+      return accounts[0]
     } catch (error) {
-      console.error("خطا در اتصال به کیف پول:", error)
+      console.error("Error connecting to wallet:", error)
       toast({
         title: "خطا",
-        description: "خطا در اتصال به کیف پول یا تغییر شبکه. لطفا دوباره تلاش کنید.",
+        description: "خطا در اتصال به کیف پول. لطفا دوباره تلاش کنید.",
         variant: "destructive",
       })
       return null
@@ -129,23 +124,49 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // Update the handleDisconnect function to properly reset connection state
   const handleDisconnect = async () => {
     try {
-      await disconnectWallet()
+      // MetaMask doesn't provide a direct disconnect method,
+      // but we can reset our app's connection state
       resetUserData()
+
+      // Clear any cached permissions by requesting accounts with empty array
+      // This is a workaround to force MetaMask to prompt again next time
+      if (window.ethereum && window.ethereum._metamask) {
+        try {
+          // This is an unofficial way to clear permissions, use with caution
+          await window.ethereum.request({
+            method: "wallet_revokePermissions",
+            params: [{ eth_accounts: {} }],
+          })
+        } catch (e) {
+          // Ignore errors from this experimental method
+          console.log("Could not revoke permissions, will reset local state only")
+        }
+      }
+
       toast({
         title: "قطع اتصال",
         description: "اتصال کیف پول با موفقیت قطع شد.",
       })
+
+      return true
     } catch (error) {
-      console.error("خطا در قطع اتصال کیف پول:", error)
+      console.error("Error disconnecting wallet:", error)
+      return false
     }
   }
 
   const handleSwitchNetwork = async () => {
     try {
+      // This will now use the current network configuration based on network type
+      // and will add the chain if needed
       await switchToZanjirNetwork()
+
+      // After successful network switch, update the state
       setIsCorrectNetwork(true)
+
       return true
     } catch (error) {
       console.error("خطا در تغییر شبکه:", error)
@@ -161,6 +182,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     connect: handleConnect,
     disconnect: handleDisconnect,
     switchNetwork: handleSwitchNetwork,
+    forceUpdateConnection: (account: string) => {
+      setConnected(true)
+      setAccount(account)
+    },
   }
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>
