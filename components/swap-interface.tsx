@@ -183,7 +183,7 @@ export function SwapInterface({
             <CardTitle className="text-xl">کیوی‌سواپ</CardTitle>
           </div>
           <CardDescription>مبادله بر بستر زنجیر</CardDescription>
-          {connected && !isCorrectNetwork && <NetworkWarning onSwitchNetwork={switchNetwork} />}
+          {/* {connected && !isCorrectNetwork && <NetworkWarning onSwitchNetwork={switchNetwork} />} */}
         </CardHeader>
         <CardContent className="relative">
           {isLoading ? (

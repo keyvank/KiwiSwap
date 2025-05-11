@@ -44,7 +44,7 @@ export function Header() {
           </nav>
         </div>
         <div className="flex items-center gap-2">
-          {connected && !isCorrectNetwork && <NetworkWarning onSwitchNetwork={switchNetwork} />}
+          {/* {connected && !isCorrectNetwork && <NetworkWarning onSwitchNetwork={switchNetwork} />} */}
           <NetworkToggle />
           <ThemeToggle />
           <ConnectWallet />
