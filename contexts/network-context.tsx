@@ -6,6 +6,25 @@ import { NetworkType, setNetwork, getCurrentNetworkType } from "@/lib/contract-u
 import { useToast } from "@/hooks/use-toast"
 import { useWallet } from "@/contexts/wallet-context" // Add this import
 
+type NetworkChangeEvent = CustomEvent<{ networkType: NetworkType }>
+
+// Create a global event for network changes
+declare global {
+  interface WindowEventMap {
+    networkChanged: NetworkChangeEvent
+  }
+}
+
+// Helper to dispatch network change event
+export function dispatchNetworkChangeEvent(networkType: NetworkType) {
+  if (typeof window !== "undefined") {
+    const event = new CustomEvent("networkChanged", {
+      detail: { networkType },
+    }) as NetworkChangeEvent
+    window.dispatchEvent(event)
+  }
+}
+
 interface NetworkContextType {
   networkType: NetworkType
   toggleNetwork: () => Promise<void> // Change return type to Promise<void>
@@ -37,6 +56,7 @@ export function NetworkProvider({ children }: { children: React.ReactNode }) {
 
       // Update the network configuration
       setNetwork(newNetworkType)
+      dispatchNetworkChangeEvent(newNetworkType)
 
       try {
         // First disconnect to reset connection state

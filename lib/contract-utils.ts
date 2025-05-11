@@ -6,6 +6,18 @@ export enum NetworkType {
   TESTNET = "testnet",
 }
 
+// Define separate contract addresses for mainnet and testnet
+export const CONTRACT_ADDRESSES = {
+  [NetworkType.MAINNET]: {
+    POOL_MANAGER: "0x7FB53Bc979C7bDd1a31797DEC8eAD92ca3469538",
+    // Add other contract addresses for mainnet if needed
+  },
+  [NetworkType.TESTNET]: {
+    POOL_MANAGER: "0x32Cf1f3a98aeAF57b88b3740875D19912A522c1A", // Example testnet address
+    // Add other contract addresses for testnet if needed
+  },
+}
+
 // Replace the existing ZANJIR_NETWORK constant with this
 export const NETWORK_CONFIGS = {
   [NetworkType.MAINNET]: {
@@ -40,6 +52,9 @@ export function getZanjirNetwork() {
   return NETWORK_CONFIGS[currentNetwork]
 }
 
+export function getCurrentContractAddresses() {
+  return CONTRACT_ADDRESSES[currentNetwork]
+}
 // Add a function to set the current network
 export function setNetwork(networkType: NetworkType) {
   currentNetwork = networkType
@@ -65,6 +80,9 @@ export function getCurrentNetworkType() {
 //   blockExplorerUrls: ["https://zanjir.xyz/explorer"],
 // }
 
+export function getPoolManagerAddress() {
+  return CONTRACT_ADDRESSES[currentNetwork].POOL_MANAGER
+}
 // ABI برای قرارداد مدیریت استخر
 export const POOL_MANAGER_ABI = [
   "function getPool(address _tokenA, address _tokenB) public view returns (address)",
@@ -108,8 +126,6 @@ export const ERC20_ABI = [
   "function totalSupply() view returns (uint256)",
 ]
 
-// آدرس قرارداد مدیریت استخر
-export const POOL_MANAGER_ADDRESS = "0x7FB53Bc979C7bDd1a31797DEC8eAD92ca3469538"
 
 // آدرس‌های توکن‌های مشخص شده
 export const TOKEN_ADDRESSES = {
@@ -330,8 +346,8 @@ export async function connectToPoolManager() {
 
     // ethers v6
     const signer = await provider.getSigner()
-
-    const contract = new ethers.Contract(POOL_MANAGER_ADDRESS, POOL_MANAGER_ABI, signer)
+    const poolManagerAddress = getPoolManagerAddress()
+    const contract = new ethers.Contract(poolManagerAddress, POOL_MANAGER_ABI, signer)
     return { provider, signer, contract }
   } catch (error) {
     console.error("خطا در اتصال به قرارداد مدیریت استخر:", error)

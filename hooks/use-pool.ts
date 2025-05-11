@@ -201,8 +201,20 @@ export function usePool({ connected, account, isCorrectNetwork, tokenAAddress, t
     } finally {
       setIsLoading(false)
     }
-  }, [connected, account, tokenAAddress, tokenBAddress, isCorrectNetwork, toast, getSortedTokenAddresses])
+  }, [connected, account, tokenAAddress, tokenBAddress, isCorrectNetwork, toast, getSortedTokenAddresses,])
+  // Listen for network changes to update contract data
+  useEffect(() => {
+    const handleNetworkChange = () => {
+      console.log("Network changed, refreshing pool data...")
+      fetchPoolAndBalances()
+    }
 
+    window.addEventListener("networkChanged", handleNetworkChange)
+
+    return () => {
+      window.removeEventListener("networkChanged", handleNetworkChange)
+    }
+  }, [fetchPoolAndBalances])
   // بارگذاری اطلاعات هنگام تغییر توکن‌ها یا اتصال
   useEffect(() => {
     if (connected && account) {
